@@ -28,16 +28,21 @@ export const DayPhaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Update the interval to check more frequently and add debug logging
   useEffect(() => {
     // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
 
-    // Set up new interval
+    // Set up new interval - check every second
     intervalRef.current = setInterval(() => {
       const now = debugTime || new Date()
       const { phase, opacity } = calculateOverlay(now)
+
+      // Optional debug logging - can be removed in production
+      console.log(`Current time: ${now.toLocaleTimeString()}, Phase: ${phase}, Opacity: ${opacity.toFixed(2)}`)
+
       setState({
         currentPhase: phase,
         currentDateTime: now,

@@ -3,7 +3,7 @@ import { useDayCycle } from "@/context/dayCycleContext"
 import { DayPhase } from "@/utils/slimeUtils"
 
 const DebugMenu = () => {
-  const { setDebugTime, currentPhase } = useDayCycle()
+  const { setDebugTime, currentPhase, currentDateTime } = useDayCycle()
 
   // Simplified debug menu - removed time input, kept phase presets
   const setPhaseTime = (phase: DayPhase) => {
@@ -44,6 +44,9 @@ const DebugMenu = () => {
     >
       <div style={{ marginBottom: "12px", textAlign: "center" }}>
         <div style={{ fontSize: "14px", marginBottom: "8px", fontWeight: "bold" }}>Time of Day</div>
+        <div style={{ fontSize: "12px", marginBottom: "8px" }}>
+          Current: {currentDateTime.toLocaleTimeString()} ({currentPhase})
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>

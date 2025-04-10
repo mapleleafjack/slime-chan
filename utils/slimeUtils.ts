@@ -7,16 +7,43 @@ export enum DayPhase {
   DUSK = "DUSK",
 }
 
+// Update the calculateOverlay function to correctly handle time phases
 export const calculateOverlay = (date: Date): { phase: DayPhase; opacity: number } => {
   const hour = date.getHours()
-  if (hour >= 5 && hour < 10) {
-    return { phase: DayPhase.MORNING, opacity: 0.2 }
-  } else if (hour >= 10 && hour < 17) {
+  const minutes = date.getMinutes()
+  const totalMinutes = hour * 60 + minutes
+
+  // Morning: 5:00 AM to 9:59 AM
+  if (totalMinutes >= 5 * 60 && totalMinutes < 10 * 60) {
+    // Gradually decrease opacity as morning progresses
+    const morningProgress = (totalMinutes - 5 * 60) / (5 * 60) // 0 at 5 AM, 1 at 10 AM
+    const opacity = 0.3 * (1 - morningProgress)
+    return { phase: DayPhase.MORNING, opacity }
+  }
+  // Day: 10:00 AM to 4:59 PM
+  else if (totalMinutes >= 10 * 60 && totalMinutes < 17 * 60) {
     return { phase: DayPhase.DAY, opacity: 0 }
-  } else if (hour >= 17 && hour < 20) {
-    return { phase: DayPhase.DUSK, opacity: 0.3 }
-  } else {
-    return { phase: DayPhase.NIGHT, opacity: 0.6 }
+  }
+  // Dusk: 5:00 PM to 7:59 PM
+  else if (totalMinutes >= 17 * 60 && totalMinutes < 20 * 60) {
+    // Gradually increase opacity as dusk progresses
+    const duskProgress = (totalMinutes - 17 * 60) / (3 * 60) // 0 at 5 PM, 1 at 8 PM
+    const opacity = 0.2 + 0.3 * duskProgress
+    return { phase: DayPhase.DUSK, opacity }
+  }
+  // Night: 8:00 PM to 4:59 AM
+  else {
+    // Darker at midnight, slightly lighter toward dawn
+    let nightProgress = 0
+    if (totalMinutes >= 20 * 60) {
+      // 8 PM to midnight
+      nightProgress = (totalMinutes - 20 * 60) / (4 * 60) // 0 at 8 PM, 1 at midnight
+    } else {
+      // Midnight to 5 AM
+      nightProgress = 1 - totalMinutes / (5 * 60) // 1 at midnight, 0 at 5 AM
+    }
+    const opacity = 0.5 + 0.2 * nightProgress
+    return { phase: DayPhase.NIGHT, opacity }
   }
 }
 
