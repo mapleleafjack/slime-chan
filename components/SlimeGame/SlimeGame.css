@@ -407,3 +407,53 @@
   perspective: 1000;
   transition: background-position 0.05s steps(1), background-image 0s;
 }
+
+/* Mushroom sprite animation */
+.mushroom-sprite {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  transition: background-position 0.05s steps(1), background-image 0s;
+}
+
+/* Mushroom background styles */
+.mushroom-sprite.background-character {
+  pointer-events: none;
+}
+
+/* Night-specific mushroom glow */
+.mushroom-sprite-night {
+  animation: mushroom-night-glow 4s infinite ease-in-out;
+}
+
+@keyframes mushroom-night-glow {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2));
+  }
+}
+
+/* Dusk-specific mushroom glow - warmer colors */
+.mushroom-sprite-dusk {
+  animation: mushroom-dusk-glow 4s infinite ease-in-out;
+}
+
+@keyframes mushroom-dusk-glow {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(255, 200, 150, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 0 4px rgba(255, 180, 120, 0.35));
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(255, 200, 150, 0.25));
+  }
+}

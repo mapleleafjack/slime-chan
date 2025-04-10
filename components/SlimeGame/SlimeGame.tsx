@@ -9,6 +9,7 @@ import MainMenu from "./MainMenu"
 import NightSparkles from "./NightSparkles"
 import SlimeManager from "./SlimeManager"
 import SunnyOverlay from "./SunnyOverlay"
+import Mushroom from "./Mushroom"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { calculateWeather, getWeatherDuration, Weather } from "@/utils/weatherUtils"
 import { DayPhase } from "@/utils/slimeUtils"
@@ -68,6 +69,9 @@ const SlimeGameContent = () => {
         onClick={handleBackgroundClick}
       >
         {weather === Weather.SUNNY && <SunnyOverlay />}
+
+        {/* Mushroom is now placed before the night overlay */}
+        <Mushroom />
 
         <div
           className="night-overlay"
