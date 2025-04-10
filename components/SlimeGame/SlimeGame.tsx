@@ -68,7 +68,8 @@ const SlimeGameContent = () => {
         style={{ backgroundImage: `url(${backgroundImage})` }}
         onClick={handleBackgroundClick}
       >
-        {weather === Weather.SUNNY && <SunnyOverlay />}
+        {/* Only show sunny overlay during DAY phase */}
+        {currentPhase === DayPhase.DAY && weather === Weather.SUNNY && <SunnyOverlay />}
 
         {/* Mushroom is now placed before the night overlay */}
         <Mushroom />

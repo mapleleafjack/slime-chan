@@ -6,45 +6,62 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 9999; /* Ensure it's above other content */
+  z-index: 50; /* Lower z-index to stay behind other elements */
   pointer-events: none; /* Allow clicks to pass through */
   overflow: hidden; /* Prevent rays from overflowing */
-  background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
+  mix-blend-mode: soft-light;
+}
+
+.sun-glow {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 200, 0.8) 0%,
+    rgba(255, 223, 186, 0.4) 40%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  filter: blur(5px);
+  animation: pulse-glow 8s infinite ease-in-out;
 }
 
 .sun-ray {
   position: absolute;
+  transform-origin: 0 0;
+  background: linear-gradient(90deg, rgba(255, 223, 186, 0.8), rgba(255, 255, 255, 0));
+  opacity: 0.6;
+  animation: pulse-ray 6s infinite ease-in-out;
+}
+
+.cloud-shadow {
+  position: absolute;
+  width: 200px;
+  height: 60px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  transform-origin: center center;
+  filter: blur(10px);
+}
+
+.light-particle {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  filter: blur(1px);
+  animation: float-particle infinite linear;
+}
+
+.light-reflection {
+  position: absolute;
   top: 0;
-  width: 6px;
+  left: 0;
+  width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, rgba(255, 223, 186, 0.8), rgba(255, 255, 255, 0));
-  opacity: 0.8;
-  transform: rotate(45deg) translateY(-50%);
-  animation: pulse 6s infinite ease-in-out;
-}
-
-.sun-ray:nth-child(1) {
-  left: 10%;
-  transform: rotate(30deg) translateY(-50%);
-  animation-delay: 0s;
-}
-
-.sun-ray:nth-child(2) {
-  left: 30%;
-  transform: rotate(45deg) translateY(-50%);
-  animation-delay: 2s;
-}
-
-.sun-ray:nth-child(3) {
-  left: 50%;
-  transform: rotate(60deg) translateY(-50%);
-  animation-delay: 4s;
-}
-
-.sun-ray:nth-child(4) {
-  left: 70%;
-  transform: rotate(75deg) translateY(-50%);
-  animation-delay: 6s;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%);
+  animation: shift-reflection 20s infinite alternate ease-in-out;
 }
 
 /* Glow effect on the floor */
@@ -53,20 +70,82 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 50px;
+  height: 80px;
   background: linear-gradient(to top, rgba(255, 223, 186, 0.3), rgba(255, 255, 255, 0));
-  opacity: 0.5;
+  opacity: 0.7;
   pointer-events: none;
+  animation: pulse-floor 8s infinite ease-in-out;
 }
 
-@keyframes pulse {
+@keyframes pulse-ray {
   0% {
-    opacity: 0.6;
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    opacity: 0.8;
+    filter: blur(5px) brightness(1);
   }
   50% {
     opacity: 1;
+    filter: blur(8px) brightness(1.1);
+  }
+  100% {
+    opacity: 0.8;
+    filter: blur(5px) brightness(1);
+  }
+}
+
+@keyframes pulse-floor {
+  0% {
+    opacity: 0.6;
+    height: 70px;
+  }
+  50% {
+    opacity: 0.8;
+    height: 80px;
   }
   100% {
     opacity: 0.6;
+    height: 70px;
+  }
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(20px, -30px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shift-reflection {
+  0% {
+    opacity: 0.1;
+    background-position: 0% 0%;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.1;
+    background-position: 100% 100%;
   }
 }
