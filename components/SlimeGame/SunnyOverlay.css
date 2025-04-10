@@ -1,0 +1,72 @@
+/* components/SlimeGame/SunnyOverlay.css */
+
+.sunny-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999; /* Ensure it's above other content */
+  pointer-events: none; /* Allow clicks to pass through */
+  overflow: hidden; /* Prevent rays from overflowing */
+  background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+
+.sun-ray {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255, 223, 186, 0.8), rgba(255, 255, 255, 0));
+  opacity: 0.8;
+  transform: rotate(45deg) translateY(-50%);
+  animation: pulse 6s infinite ease-in-out;
+}
+
+.sun-ray:nth-child(1) {
+  left: 10%;
+  transform: rotate(30deg) translateY(-50%);
+  animation-delay: 0s;
+}
+
+.sun-ray:nth-child(2) {
+  left: 30%;
+  transform: rotate(45deg) translateY(-50%);
+  animation-delay: 2s;
+}
+
+.sun-ray:nth-child(3) {
+  left: 50%;
+  transform: rotate(60deg) translateY(-50%);
+  animation-delay: 4s;
+}
+
+.sun-ray:nth-child(4) {
+  left: 70%;
+  transform: rotate(75deg) translateY(-50%);
+  animation-delay: 6s;
+}
+
+/* Glow effect on the floor */
+.floor-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(to top, rgba(255, 223, 186, 0.3), rgba(255, 255, 255, 0));
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
