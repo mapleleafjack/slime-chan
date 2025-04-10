@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useRef, useState } from "react"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { DayPhase, randomInt } from "@/utils/slimeUtils"
@@ -10,10 +12,10 @@ const MUSHROOM_CONFIG = {
   frameHeight: 48,
   totalWalkFrames: 4,
   totalIdleFrames: 9,
-  fps: 8,
+  fps: 12,
   speed: 0.5,
-  // Move the mushroom up by its height (48px)
   groundLevel: ANIMATION_CONFIG.groundLevel - 10, // Position higher in the game space
+  glowDuration: 1000, // Duration of glow effect in ms
 }
 
 const Mushroom = () => {
@@ -23,9 +25,21 @@ const Mushroom = () => {
   const [isWalking, setIsWalking] = useState(true)
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
+  const [isGlowing, setIsGlowing] = useState(false)
   const animationFrameRef = useRef<number | null>(null)
   const lastTimestampRef = useRef<number>(0)
   const behaviorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const glowTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const mushroomRef = useRef<HTMLDivElement>(null)
+
+  // Preload images to prevent flickering
+  useEffect(() => {
+    const walkImage = new Image()
+    walkImage.src = "/assets/mushroom/walk.png"
+
+    const idleImage = new Image()
+    idleImage.src = "/assets/mushroom/idle.png"
+  }, [])
 
   // Show mushroom during dusk and night
   useEffect(() => {
@@ -54,7 +68,7 @@ const Mushroom = () => {
           setPosition((prev) => {
             const newPosition = prev + direction * MUSHROOM_CONFIG.speed
 
-            // Check boundaries
+            // Only change direction when actually hitting the border
             if (newPosition <= 0) {
               setDirection(1)
               return 0
@@ -82,22 +96,22 @@ const Mushroom = () => {
     }
   }, [isVisible, isWalking, direction])
 
-  // Randomly change behavior
+  // Randomly change behavior but don't change direction until hitting border
   useEffect(() => {
     if (!isVisible) return
 
     const changeBehavior = () => {
-      // 70% chance to walk, 30% chance to idle
-      const shouldWalk = Math.random() < 0.7
+      // 80% chance to walk, 20% chance to idle
+      const shouldWalk = Math.random() < 0.8
       setIsWalking(shouldWalk)
 
-      // Randomly change direction sometimes
-      if (shouldWalk && Math.random() < 0.3) {
-        setDirection((prev) => (prev === 1 ? -1 : 1))
-      }
+      // Don't change direction here - only at borders
 
       // Schedule next behavior change
-      behaviorTimeoutRef.current = setTimeout(changeBehavior, isWalking ? randomInt(3000, 6000) : randomInt(1000, 3000))
+      behaviorTimeoutRef.current = setTimeout(
+        changeBehavior,
+        isWalking ? randomInt(3000, 6000) : randomInt(1000, 2000), // Shorter idle times
+      )
     }
 
     // Initial behavior change
@@ -110,6 +124,34 @@ const Mushroom = () => {
     }
   }, [isVisible])
 
+  // Handle click to make mushroom glow
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent event bubbling
+
+    // Clear any existing glow timeout
+    if (glowTimeoutRef.current) {
+      clearTimeout(glowTimeoutRef.current)
+    }
+
+    // Activate glow effect
+    setIsGlowing(true)
+
+    // Set timeout to turn off glow
+    glowTimeoutRef.current = setTimeout(() => {
+      setIsGlowing(false)
+      glowTimeoutRef.current = null
+    }, MUSHROOM_CONFIG.glowDuration)
+  }
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (glowTimeoutRef.current) {
+        clearTimeout(glowTimeoutRef.current)
+      }
+    }
+  }, [])
+
   if (!isVisible) return null
 
   const currentImage = isWalking ? "/assets/mushroom/walk.png" : "/assets/mushroom/idle.png"
@@ -117,10 +159,13 @@ const Mushroom = () => {
 
   // Adjust visual effects based on time of day
   const isDusk = currentPhase === DayPhase.DUSK
-  const glowClass = isDusk ? "mushroom-sprite-dusk" : "mushroom-sprite-night"
+  const baseGlowClass = isDusk ? "mushroom-sprite-dusk" : "mushroom-sprite-night"
+  const glowClass = isGlowing ? "mushroom-sprite-glowing" : baseGlowClass
 
   return (
     <div
+      ref={mushroomRef}
+      onClick={handleClick}
       style={{
         position: "absolute",
         top: `${MUSHROOM_CONFIG.groundLevel}px`,
@@ -130,11 +175,16 @@ const Mushroom = () => {
         background: `url(${currentImage}) ${backgroundOffsetX}px 0 no-repeat`,
         transform: direction === -1 ? "scaleX(-1)" : "scaleX(1)",
         transformOrigin: "center center",
-        filter: isDusk ? "drop-shadow(0 0 3px rgba(255,200,150,0.3))" : "drop-shadow(0 0 3px rgba(255,255,255,0.3))",
-        transition: "filter 0.3s ease, transform 0.2s ease",
-        willChange: "background-position, transform",
+        filter: isGlowing
+          ? "drop-shadow(0 0 10px rgba(255,255,255,0.9)) brightness(1.3)"
+          : isDusk
+            ? "drop-shadow(0 0 3px rgba(255,200,150,0.3))"
+            : "drop-shadow(0 0 3px rgba(255,255,255,0.3))",
+        transition: isGlowing ? "filter 0.2s ease-in" : "filter 0.5s ease-out, transform 0.2s ease",
+        willChange: "background-position, transform, filter",
         imageRendering: "pixelated",
-        zIndex: 89, // Lower z-index to be behind night overlay and slimes
+        zIndex: isGlowing ? 96 : 89, // Temporarily increase z-index when glowing
+        cursor: "pointer", // Show pointer cursor on hover
       }}
       className={`mushroom-sprite background-character ${glowClass}`}
     />
