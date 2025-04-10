@@ -1,4 +1,7 @@
+"use client"
+
 import type React from "react"
+import { useEffect, useRef } from "react"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { DayPhase } from "@/utils/slimeUtils"
 
@@ -26,6 +29,18 @@ const SlimeSprite: React.FC<SlimeSpriteProps> = ({
   const frameWidth = 128
   const frameHeight = 128
   const { currentPhase } = useDayCycle()
+  const spriteRef = useRef<HTMLDivElement>(null)
+
+  // Preload images to prevent flickering
+  useEffect(() => {
+    // Preload all animation states for the current color
+    const imagesToPreload = [`/assets/${color}/idle.png`, `/assets/${color}/walk.png`, `/assets/${color}/jump.png`]
+
+    imagesToPreload.forEach((src) => {
+      const img = new Image()
+      img.src = src
+    })
+  }, [color])
 
   // Enhance visual treatment for all slimes, with slight enhancement for active slime
   const isNight = currentPhase === DayPhase.NIGHT
@@ -48,6 +63,7 @@ const SlimeSprite: React.FC<SlimeSpriteProps> = ({
 
   return (
     <div
+      ref={spriteRef}
       style={{
         position: "absolute",
         top: `${topPosition}px`,
@@ -58,8 +74,11 @@ const SlimeSprite: React.FC<SlimeSpriteProps> = ({
         transform: direction === -1 ? "scaleX(-1)" : "scaleX(1)",
         transformOrigin: "center center",
         filter: `${glowFilter} ${brightnessFilter}`,
-        transition: "filter 0.3s ease",
+        transition: "filter 0.3s ease, transform 0.2s ease",
+        willChange: "background-position, transform, filter",
+        imageRendering: "pixelated",
       }}
+      className="slime-sprite"
     />
   )
 }

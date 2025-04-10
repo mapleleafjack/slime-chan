@@ -50,7 +50,7 @@ const MainWidget: React.FC<MainWidgetProps> = ({ currentDateTime }) => {
         color: "white",
       }}
     >
-      <h4 style={{ margin: 0, fontSize: "14px" }}>{formattedDate}</h4>
+      <h4 style={{ margin: 0, fontSize: "14px" }}>Slime-chan</h4>
       <p style={{ margin: 0, fontSize: "12px" }}>{formattedTime}</p>
     </div>
   )

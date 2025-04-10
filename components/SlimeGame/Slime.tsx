@@ -20,10 +20,24 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   const { currentPhase } = useDayCycle()
   const { handleUserMessage } = useSlimeAI(id)
   const [isHovered, setIsHovered] = useState(false)
+  const slimeRef = useRef<HTMLDivElement>(null)
 
   // Find the slime data
   const slime = state.slimes.find((s) => s.id === id)
   if (!slime) return null
+
+  // Preload all slime images on component mount
+  useEffect(() => {
+    const colors = ["blue", "red", "green"]
+    const animations = ["idle", "walk", "jump"]
+
+    colors.forEach((color) => {
+      animations.forEach((animation) => {
+        const img = new Image()
+        img.src = `/assets/${color}/${animation}.png`
+      })
+    })
+  }, [])
 
   const handleClick = (e: React.MouseEvent) => {
     // Stop event propagation to prevent deselection
@@ -230,6 +244,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
 
   return (
     <div
+      ref={slimeRef}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

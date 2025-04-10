@@ -3,9 +3,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Slime Game",
+  title: "Slime-chan",
   description: "A cute slime pet game",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -19,6 +18,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-import './globals.css'

@@ -396,3 +396,14 @@
     transform: scale(0.95);
   }
 }
+
+/* Fix for sprite flickering */
+.slime-sprite {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  transition: background-position 0.05s steps(1), background-image 0s;
+}
