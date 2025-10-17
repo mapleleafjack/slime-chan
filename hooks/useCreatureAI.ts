@@ -190,6 +190,40 @@ export const useCreatureAI = (creatureId: string) => {
         if (aiResponse.success) {
           console.log(`✓ AI response: "${aiResponse.message}"`)
           responseText = aiResponse.message
+          
+          // Process AI actions (structured responses)
+          if (aiResponse.actions && aiResponse.actions.length > 0) {
+            console.log(`🎯 Processing ${aiResponse.actions.length} action(s) from AI`)
+            
+            for (const action of aiResponse.actions) {
+              switch (action.type) {
+                case "set_name":
+                  if (!currentCreature.firstName && typeof action.value === "string") {
+                    const newName = action.value.trim()
+                    if (newName.length > 0) {
+                      dispatch({ type: "SET_CREATURE_NAME", payload: { id: creatureId, firstName: newName } })
+                      // Major relationship boost for naming!
+                      dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 8 } })
+                      dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 5 } })
+                      dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: "loving" } })
+                      console.log(`✨ Creature named by AI: ${newName}`)
+                    }
+                  }
+                  break
+                
+                // Future actions can be added here
+                case "update_mood":
+                case "update_affection":
+                case "update_trust":
+                  // These could be used for AI-driven emotional responses
+                  console.log(`ℹ️ AI suggested action: ${action.type}`)
+                  break
+                  
+                default:
+                  console.warn(`⚠️ Unknown action type: ${action.type}`)
+              }
+            }
+          }
         } else {
           // Log error but don't show to user, fall back to random phrase
           console.warn("⚠️ AI response failed:", aiResponse.error)

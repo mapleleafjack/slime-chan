@@ -30,12 +30,24 @@ export async function GET(request: NextRequest) {
     const gameState = await db.loadGameState(session.userId)
 
     if (!gameState) {
+      console.log('ℹ️ No saved game found for user:', session.userId)
       return NextResponse.json<GameStateResponse>({
         success: true,
         message: 'No saved game found',
         gameState: undefined,
       })
     }
+
+    console.log('📥 Loading from database:', {
+      userId: session.userId,
+      creatureCount: gameState.creatures?.length || 0,
+      creatureDetails: gameState.creatures?.map(c => ({
+        id: c.id,
+        name: c.firstName,
+        type: c.creatureType,
+        conversationLength: c.conversationHistory?.length || 0,
+      })),
+    })
 
     return NextResponse.json<GameStateResponse>({
       success: true,

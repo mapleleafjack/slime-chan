@@ -37,6 +37,17 @@ export async function POST(request: NextRequest) {
       version: '1.0',
     }
 
+    console.log('💾 Saving to database:', {
+      userId: session.userId,
+      creatureCount: gameState.creatures.length,
+      creatureDetails: gameState.creatures.map(c => ({
+        id: c.id,
+        name: c.firstName,
+        type: c.creatureType,
+        conversationLength: c.conversationHistory?.length || 0,
+      })),
+    })
+
     await db.saveGameState(gameState)
 
     return NextResponse.json<GameStateResponse>({

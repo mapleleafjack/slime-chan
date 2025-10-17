@@ -12,6 +12,12 @@ export interface AIResponse {
   success: boolean
   message: string
   error?: string
+  actions?: CreatureAction[]
+}
+
+export interface CreatureAction {
+  type: "set_name" | "update_mood" | "update_affection" | "update_trust"
+  value: string | number
 }
 
 // Enhanced personality descriptions for more nuanced AI responses
@@ -109,6 +115,17 @@ ${hasName ? `- You know your name is ${creature.firstName} and will introduce yo
 
 Current activity: ${creature.isSleeping ? "just woke up" : creature.isJumping ? "bouncing excitedly" : creature.isWalking ? "exploring" : "relaxing"}
 
+IMPORTANT - Response Format:
+You must respond with valid JSON in this exact format:
+{
+  "message": "your conversational response here",
+  "actions": [
+    // Optional actions based on the conversation:
+    // If user gives you a name: {"type": "set_name", "value": "NameHere"}
+    // Note: Only include actions when appropriate based on user input
+  ]
+}
+
 Be authentic and be a genuine friend.`
   } else if (isMushroom(creature)) {
     const creatureName = creature.firstName || "mushroom"
@@ -136,6 +153,17 @@ ${hasName ? `- You know your name is ${creature.firstName} and will introduce yo
 - Optional expressions: ✨ *glows softly*, 🍄 *spores drift*, 🌙 *emanates moonlight*
 
 Current activity: ${creature.isGlowing ? "glowing brightly" : creature.isWalking ? "wandering the night" : "standing peacefully"}
+
+IMPORTANT - Response Format:
+You must respond with valid JSON in this exact format:
+{
+  "message": "your conversational response here",
+  "actions": [
+    // Optional actions based on the conversation:
+    // If user gives you a name: {"type": "set_name", "value": "NameHere"}
+    // Note: Only include actions when appropriate based on user input
+  ]
+}
 
 Be mysterious wisdom incarnate, yet a genuine companion.`
   }
@@ -168,15 +196,32 @@ export const callAI = async (config: AIConfig, messages: AIMessage[]): Promise<A
     }
 
     const data = await response.json()
-    const message = data.choices?.[0]?.message?.content?.trim()
+    const rawMessage = data.choices?.[0]?.message?.content?.trim()
 
-    if (!message) {
+    if (!rawMessage) {
       throw new Error("No response from AI")
     }
 
+    // Try to parse as JSON for structured responses
+    try {
+      const parsed = JSON.parse(rawMessage)
+      if (parsed.message) {
+        return {
+          success: true,
+          message: parsed.message,
+          actions: parsed.actions || [],
+        }
+      }
+    } catch {
+      // If parsing fails, treat as plain text response (fallback for backwards compatibility)
+      console.warn("AI response not in JSON format, using as plain text")
+    }
+
+    // Fallback: treat entire response as message
     return {
       success: true,
-      message,
+      message: rawMessage,
+      actions: [],
     }
   } catch (error) {
     console.error("AI API Error:", error)
@@ -184,6 +229,7 @@ export const callAI = async (config: AIConfig, messages: AIMessage[]): Promise<A
       success: false,
       message: "",
       error: error instanceof Error ? error.message : "Unknown error occurred",
+      actions: [],
     }
   }
 }

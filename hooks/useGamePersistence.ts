@@ -22,6 +22,7 @@ export const useGamePersistence = () => {
   const isLoadingRef = useRef(false)
   const lastUserIdRef = useRef<string | null>(null)
   const lastMeaningfulStateRef = useRef<string>("")
+  const previousCreaturesSignatureRef = useRef<string>("")
   const [hasLoaded, setHasLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -47,8 +48,14 @@ export const useGamePersistence = () => {
         if (data.success && data.gameState) {
           const gameState: GameState = data.gameState
 
-          console.log("Loaded game state:", {
+          console.log("📥 Loaded game state:", {
             creatureCount: gameState.creatures?.length || 0,
+            creatureDetails: gameState.creatures?.map(c => ({ 
+              id: c.id, 
+              name: c.firstName, 
+              type: c.creatureType,
+              conversationLength: c.conversationHistory?.length || 0 
+            })),
             activeCreature: gameState.activeCreatureId,
           })
 
@@ -59,6 +66,7 @@ export const useGamePersistence = () => {
           if (gameState.creatures && gameState.creatures.length > 0) {
             gameState.creatures.forEach((creature) => {
               // No migration needed - creatures without names should stay unnamed
+              console.log(`  Adding creature: ${creature.firstName || creature.creatureType} (${creature.id})`)
               creatureDispatch({ type: "ADD_CREATURE", payload: creature })
             })
           }
@@ -78,9 +86,9 @@ export const useGamePersistence = () => {
 
           setHasLoaded(true)
           lastUserIdRef.current = user.id
-          console.log("Game loaded successfully")
+          console.log("✅ Game loaded successfully")
         } else {
-          console.log("No saved game found, starting fresh")
+          console.log("ℹ️ No saved game found, starting fresh")
           setHasLoaded(true)
           lastUserIdRef.current = user.id
         }
@@ -104,6 +112,12 @@ export const useGamePersistence = () => {
         debugTime,
       }
 
+      console.log("💾 Saving game state:", {
+        creatureCount: gameState.creatures?.length,
+        creatureNames: gameState.creatures?.map(c => ({ id: c.id, name: c.firstName, type: c.creatureType })),
+        activeCreature: gameState.activeCreatureId,
+      })
+
       const response = await fetch("/api/game/save", {
         method: "POST",
         headers: {
@@ -116,8 +130,10 @@ export const useGamePersistence = () => {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          console.log("Game saved successfully")
+          console.log("✅ Game saved successfully")
         }
+      } else {
+        console.error("❌ Save failed:", response.status, response.statusText)
       }
     } catch (error) {
       console.error("Failed to save game:", error)
@@ -169,6 +185,30 @@ export const useGamePersistence = () => {
     }
   }, [isAuthenticated, saveGameState])
 
+  // Create a stable string representation of meaningful fields for comparison
+  // Only recalculates when the signature actually changes (not on every animation frame)
+  const creaturesSignature = JSON.stringify(
+    creatureState.creatures.map(c => ({
+      id: c.id,
+      firstName: c.firstName,
+      personality: c.personality,
+      color: c.color,
+      creatureType: c.creatureType,
+      affection: c.relationship.affection,
+      trust: c.relationship.trust,
+      mood: c.relationship.mood,
+      relationshipLevel: c.relationship.relationshipLevel,
+      historyLength: c.conversationHistory?.length || 0,
+      mode: c.mode,
+    }))
+  )
+
+  // Check if creatures signature changed
+  const creaturesChanged = creaturesSignature !== previousCreaturesSignatureRef.current
+  if (creaturesChanged) {
+    previousCreaturesSignatureRef.current = creaturesSignature
+  }
+
   // Create a memoized version of meaningful state that only changes when important fields change
   // Explicitly exclude animation-related fields (position, frames, isWalking, isJumping, etc.)
   const meaningfulState = useMemo(() => {
@@ -189,23 +229,7 @@ export const useGamePersistence = () => {
       })),
       activeCreatureId: creatureState.activeCreatureId,
     })
-  }, [
-    // Only depend on the creatures array length and active creature
-    // This prevents recalculation on every frame update
-    creatureState.creatures.length,
-    creatureState.activeCreatureId,
-    // Stringify the important fields to track deep changes
-    JSON.stringify(creatureState.creatures.map(c => ({
-      id: c.id,
-      firstName: c.firstName,
-      personality: c.personality,
-      affection: c.relationship.affection,
-      trust: c.relationship.trust,
-      mood: c.relationship.mood,
-      historyLength: c.conversationHistory?.length || 0,
-      mode: c.mode,
-    }))),
-  ])
+  }, [creaturesChanged, creaturesSignature, creatureState.activeCreatureId, creatureState.creatures])
 
   // Save on important state changes (debounced)
   useEffect(() => {
@@ -215,11 +239,20 @@ export const useGamePersistence = () => {
 
     // Only trigger save if meaningful state actually changed
     if (meaningfulState !== lastMeaningfulStateRef.current) {
+      const prev = lastMeaningfulStateRef.current ? JSON.parse(lastMeaningfulStateRef.current) : null
+      const curr = JSON.parse(meaningfulState)
+      
+      console.log("🔄 Meaningful state changed, triggering debounced save")
+      console.log("  Changes detected in:", {
+        creatures: prev?.creatures?.[0]?.firstName !== curr?.creatures?.[0]?.firstName ? "name changed" : "other",
+        previousName: prev?.creatures?.[0]?.firstName,
+        currentName: curr?.creatures?.[0]?.firstName,
+      })
+      
       lastMeaningfulStateRef.current = meaningfulState
-      console.log("Meaningful state changed, triggering debounced save")
       debouncedSave()
     }
-  }, [isAuthenticated, hasLoaded, meaningfulState, debouncedSave])
+  }, [isAuthenticated, hasLoaded, meaningfulState, debouncedSave, creatureState.creatures])
 
   // Save before page unload
   useEffect(() => {
