@@ -4,6 +4,7 @@ import { useAIConfig, AIProvider } from "@/context/aiConfigContext"
 import { testAIConnection } from "@/utils/aiService"
 import { DayPhase } from "@/utils/gameUtils"
 import { useState } from "react"
+import { Card, Button } from "pixel-retroui"
 
 const DebugMenu = () => {
   const { setDebugTime, currentPhase, currentDateTime } = useDayCycle()
@@ -53,180 +54,257 @@ const DebugMenu = () => {
 
   return (
     <div
-      className="debug-panel"
       style={{
-        position: "absolute",
-        top: "50px",
-        left: "10px",
-        zIndex: 1000,
-        backgroundColor: "rgba(0, 0, 0, 0.9)",
-        padding: "16px",
-        borderRadius: "8px",
-        boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
-        color: "white",
-        width: "320px",
-        maxHeight: "calc(100vh - 70px)",
-        overflowY: "auto",
-        transition: "all 0.3s ease",
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        maxWidth: "380px",
+        pointerEvents: "none",
       }}
     >
-      {/* Time Controls */}
-      <div style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
-        <div style={{ fontSize: "14px", marginBottom: "8px", fontWeight: "bold" }}>⏰ Time of Day</div>
-        <div style={{ fontSize: "12px", marginBottom: "8px", opacity: 0.8 }}>
+      {/* Time Controls Card */}
+      <Card
+        bg="rgba(0, 0, 0, 0.85)"
+        borderColor="rgba(255,255,255,0.3)"
+        style={{
+          padding: "16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+          pointerEvents: "auto",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <h4
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: "14px",
+            fontWeight: "bold",
+            color: "#ffffff",
+            fontFamily: "monospace",
+          }}
+        >
+          ⏰ Time of Day
+        </h4>
+        <div
+          style={{
+            fontSize: "12px",
+            marginBottom: "12px",
+            color: "rgba(255,255,255,0.7)",
+            fontFamily: "monospace",
+          }}
+        >
           Current: {currentDateTime.toLocaleTimeString()} ({currentPhase})
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
-          <button
-            className="debug-button"
+          <Button
             onClick={() => setPhaseTime(DayPhase.MORNING)}
-            style={{
-              padding: "6px",
-              background: "#5499C7",
-              border: "none",
-              borderRadius: "4px",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
+            bg="#5499C7"
+            textColor="#ffffff"
+            borderColor="#000000"
+            style={{ fontSize: "12px", padding: "8px", backgroundColor: "#5499C7" }}
           >
             Morning
-          </button>
-          <button
-            className="debug-button"
+          </Button>
+          <Button
             onClick={() => setPhaseTime(DayPhase.DAY)}
-            style={{
-              padding: "6px",
-              background: "#F4D03F",
-              border: "none",
-              borderRadius: "4px",
-              color: "#333",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
+            bg="#F4D03F"
+            textColor="#333333"
+            borderColor="#000000"
+            style={{ fontSize: "12px", padding: "8px", backgroundColor: "#F4D03F" }}
           >
             Day
-          </button>
-          <button
-            className="debug-button"
+          </Button>
+          <Button
             onClick={() => setPhaseTime(DayPhase.DUSK)}
-            style={{
-              padding: "6px",
-              background: "#E67E22",
-              border: "none",
-              borderRadius: "4px",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
+            bg="#E67E22"
+            textColor="#ffffff"
+            borderColor="#000000"
+            style={{ fontSize: "12px", padding: "8px", backgroundColor: "#E67E22" }}
           >
             Dusk
-          </button>
-          <button
-            className="debug-button"
+          </Button>
+          <Button
             onClick={() => setPhaseTime(DayPhase.NIGHT)}
-            style={{
-              padding: "6px",
-              background: "#2C3E50",
-              border: "none",
-              borderRadius: "4px",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
+            bg="#2C3E50"
+            textColor="#ffffff"
+            borderColor="#000000"
+            style={{ fontSize: "12px", padding: "8px", backgroundColor: "#2C3E50" }}
           >
             Night
-          </button>
+          </Button>
         </div>
-        <button
-          className="debug-button"
+        <Button
           onClick={() => setDebugTime(null)}
-          style={{
-            padding: "6px 10px",
-            background: "#444",
-            border: "none",
-            borderRadius: "4px",
-            color: "white",
-            cursor: "pointer",
-            width: "100%",
-            fontSize: "12px",
-          }}
+          bg="#444444"
+          textColor="#ffffff"
+          borderColor="#000000"
+          style={{ fontSize: "12px", padding: "8px", width: "100%", backgroundColor: "#444444" }}
         >
           Reset to System Time
-        </button>
-      </div>
+        </Button>
+      </Card>
 
-      {/* AI Configuration */}
-      <div style={{ marginBottom: "8px" }}>
-        <div style={{ fontSize: "14px", marginBottom: "12px", fontWeight: "bold" }}>
-          🤖 AI Configuration
-          {isConfigured && <span style={{ marginLeft: "8px", fontSize: "10px", color: "#4ade80" }}>● Configured</span>}
+      {/* AI Configuration Card */}
+      <Card
+        bg="rgba(0, 0, 0, 0.85)"
+        borderColor="rgba(255,255,255,0.3)"
+        style={{
+          padding: "16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+          pointerEvents: "auto",
+          backdropFilter: "blur(10px)",
+          maxHeight: "calc(100vh - 250px)",
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <h4
+            style={{
+              margin: 0,
+              fontSize: "14px",
+              fontWeight: "bold",
+              color: "#ffffff",
+              fontFamily: "monospace",
+            }}
+          >
+            🤖 AI Configuration
+          </h4>
+          {isConfigured && (
+            <span
+              style={{
+                fontSize: "10px",
+                color: "#4ade80",
+                fontFamily: "monospace",
+                background: "rgba(74, 222, 128, 0.2)",
+                padding: "4px 8px",
+                border: "2px solid #4ade80",
+              }}
+            >
+              ● Configured
+            </span>
+          )}
         </div>
 
         {/* Provider Selection */}
         <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", fontSize: "11px", marginBottom: "4px", opacity: 0.8 }}>Provider</label>
+          <label
+            style={{
+              display: "block",
+              fontSize: "11px",
+              marginBottom: "6px",
+              color: "rgba(255,255,255,0.8)",
+              fontFamily: "monospace",
+              fontWeight: "bold",
+            }}
+          >
+            Provider
+          </label>
           <select
             value={config.provider}
             onChange={(e) => updateConfig({ provider: e.target.value as AIProvider })}
             style={{
               width: "100%",
-              padding: "6px",
-              background: "#2a2a2a",
-              border: "1px solid #444",
-              borderRadius: "4px",
-              color: "white",
+              padding: "8px",
+              background: "#ffffff",
+              border: "4px solid #000000",
+              color: "#000000",
               fontSize: "12px",
               cursor: "pointer",
+              fontFamily: "monospace",
+              imageRendering: "pixelated",
             }}
           >
+            <option value="local">Local LLM (No API Key Required)</option>
             <option value="deepseek">DeepSeek</option>
             <option value="openai">OpenAI</option>
             <option value="custom">Custom</option>
           </select>
         </div>
 
-        {/* API Key */}
-        <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", fontSize: "11px", marginBottom: "4px", opacity: 0.8 }}>
-            API Key
-          </label>
-          <div style={{ display: "flex", gap: "4px" }}>
-            <input
-              type={showApiKey ? "text" : "password"}
-              value={config.apiKey}
-              onChange={(e) => updateConfig({ apiKey: e.target.value })}
-              placeholder="sk-..."
+        {/* Local LLM Info */}
+        {config.provider === "local" && (
+          <Card
+            bg="rgba(74, 222, 128, 0.2)"
+            borderColor="#4ade80"
+            style={{
+              padding: "12px",
+              marginBottom: "12px",
+            }}
+          >
+            <div
               style={{
-                flex: 1,
-                padding: "6px",
-                background: "#2a2a2a",
-                border: "1px solid #444",
-                borderRadius: "4px",
-                color: "white",
-                fontSize: "12px",
-              }}
-            />
-            <button
-              onClick={() => setShowApiKey(!showApiKey)}
-              style={{
-                padding: "6px 10px",
-                background: "#444",
-                border: "none",
-                borderRadius: "4px",
-                color: "white",
-                cursor: "pointer",
-                fontSize: "12px",
+                fontSize: "11px",
+                color: "#4ade80",
+                lineHeight: "1.6",
+                fontFamily: "monospace",
               }}
             >
-              {showApiKey ? "👁️" : "👁️‍🗨️"}
-            </button>
+              🚀 Using local LLM (DistilGPT2)
+              <br />✓ No API key needed
+              <br />✓ Free & private
+              <br />⚠️ First message downloads ~350MB model
+            </div>
+          </Card>
+        )}
+
+        {/* API Key (hidden for local provider) */}
+        {config.provider !== "local" && (
+          <div style={{ marginBottom: "12px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                marginBottom: "6px",
+                color: "rgba(255,255,255,0.8)",
+                fontFamily: "monospace",
+                fontWeight: "bold",
+              }}
+            >
+              API Key
+            </label>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={config.apiKey}
+                onChange={(e) => updateConfig({ apiKey: e.target.value })}
+                placeholder="sk-..."
+                style={{
+                  flex: 1,
+                  padding: "8px",
+                  background: "#ffffff",
+                  border: "4px solid #000000",
+                  color: "#000000",
+                  fontSize: "12px",
+                  fontFamily: "monospace",
+                  imageRendering: "pixelated",
+                }}
+              />
+              <Button
+                onClick={() => setShowApiKey(!showApiKey)}
+                bg="#444444"
+                textColor="#ffffff"
+                borderColor="#000000"
+                style={{ minWidth: "50px", fontSize: "14px", backgroundColor: "#444444" }}
+              >
+                {showApiKey ? "👁️" : "👁️‍🗨️"}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Model */}
         <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", fontSize: "11px", marginBottom: "4px", opacity: 0.8 }}>Model</label>
+          <label
+            style={{
+              display: "block",
+              fontSize: "11px",
+              marginBottom: "6px",
+              color: "rgba(255,255,255,0.8)",
+              fontFamily: "monospace",
+              fontWeight: "bold",
+            }}
+          >
+            Model
+          </label>
           <input
             type="text"
             value={config.model}
@@ -234,12 +312,13 @@ const DebugMenu = () => {
             placeholder="deepseek-chat"
             style={{
               width: "100%",
-              padding: "6px",
-              background: "#2a2a2a",
-              border: "1px solid #444",
-              borderRadius: "4px",
-              color: "white",
+              padding: "8px",
+              background: "#ffffff",
+              border: "4px solid #000000",
+              color: "#000000",
               fontSize: "12px",
+              fontFamily: "monospace",
+              imageRendering: "pixelated",
             }}
           />
         </div>
@@ -247,7 +326,16 @@ const DebugMenu = () => {
         {/* Base URL (for custom provider) */}
         {config.provider === "custom" && (
           <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "11px", marginBottom: "4px", opacity: 0.8 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                marginBottom: "6px",
+                color: "rgba(255,255,255,0.8)",
+                fontFamily: "monospace",
+                fontWeight: "bold",
+              }}
+            >
               Base URL
             </label>
             <input
@@ -257,12 +345,13 @@ const DebugMenu = () => {
               placeholder="https://api.example.com/v1"
               style={{
                 width: "100%",
-                padding: "6px",
-                background: "#2a2a2a",
-                border: "1px solid #444",
-                borderRadius: "4px",
-                color: "white",
+                padding: "8px",
+                background: "#ffffff",
+                border: "4px solid #000000",
+                color: "#000000",
                 fontSize: "12px",
+                fontFamily: "monospace",
+                imageRendering: "pixelated",
               }}
             />
           </div>
@@ -270,12 +359,29 @@ const DebugMenu = () => {
 
         {/* Advanced Settings */}
         <details style={{ marginBottom: "12px" }}>
-          <summary style={{ cursor: "pointer", fontSize: "11px", opacity: 0.8, marginBottom: "8px" }}>
-            Advanced Settings
+          <summary
+            style={{
+              cursor: "pointer",
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: "12px",
+              fontFamily: "monospace",
+              fontWeight: "bold",
+            }}
+          >
+            ⚙️ Advanced Settings
           </summary>
           <div style={{ paddingLeft: "8px" }}>
-            <div style={{ marginBottom: "8px" }}>
-              <label style={{ display: "block", fontSize: "11px", marginBottom: "4px", opacity: 0.8 }}>
+            <div style={{ marginBottom: "12px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  marginBottom: "6px",
+                  color: "rgba(255,255,255,0.8)",
+                  fontFamily: "monospace",
+                }}
+              >
                 Temperature: {config.temperature}
               </label>
               <input
@@ -289,7 +395,15 @@ const DebugMenu = () => {
               />
             </div>
             <div style={{ marginBottom: "8px" }}>
-              <label style={{ display: "block", fontSize: "11px", marginBottom: "4px", opacity: 0.8 }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  marginBottom: "6px",
+                  color: "rgba(255,255,255,0.8)",
+                  fontFamily: "monospace",
+                }}
+              >
                 Max Tokens: {config.maxTokens}
               </label>
               <input
@@ -307,67 +421,65 @@ const DebugMenu = () => {
 
         {/* Test & Reset Buttons */}
         <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-          <button
+          <Button
             onClick={handleTestConnection}
             disabled={!isConfigured || testStatus === "testing"}
+            bg={testStatus === "success" ? "#4ade80" : testStatus === "error" ? "#ef4444" : "#6366f1"}
+            textColor="#ffffff"
+            borderColor="#000000"
             style={{
               flex: 1,
-              padding: "8px",
-              background: testStatus === "success" ? "#4ade80" : testStatus === "error" ? "#ef4444" : "#6366f1",
-              border: "none",
-              borderRadius: "4px",
-              color: "white",
+              opacity: isConfigured ? 1 : 0.5,
               cursor: isConfigured && testStatus !== "testing" ? "pointer" : "not-allowed",
               fontSize: "12px",
-              opacity: isConfigured ? 1 : 0.5,
-              fontWeight: "bold",
+              backgroundColor: testStatus === "success" ? "#4ade80" : testStatus === "error" ? "#ef4444" : "#6366f1",
             }}
           >
             {testStatus === "testing" ? "Testing..." : "Test Connection"}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={resetConfig}
-            style={{
-              padding: "8px 12px",
-              background: "#dc2626",
-              border: "none",
-              borderRadius: "4px",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
+            bg="#dc2626"
+            textColor="#ffffff"
+            borderColor="#000000"
+            style={{ minWidth: "70px", fontSize: "12px", backgroundColor: "#dc2626" }}
           >
             Reset
-          </button>
+          </Button>
         </div>
 
         {/* Status Message */}
         {testMessage && (
-          <div
-            style={{
-              padding: "8px",
-              background: testStatus === "success" ? "rgba(74, 222, 128, 0.2)" : "rgba(239, 68, 68, 0.2)",
-              borderRadius: "4px",
-              fontSize: "11px",
-              color: testStatus === "success" ? "#4ade80" : "#fca5a5",
-              marginTop: "8px",
-            }}
+          <Card
+            bg={testStatus === "success" ? "rgba(74, 222, 128, 0.2)" : "rgba(239, 68, 68, 0.2)"}
+            borderColor={testStatus === "success" ? "#4ade80" : "#ef4444"}
+            style={{ padding: "8px", marginBottom: "8px" }}
           >
-            {testMessage}
-          </div>
+            <div
+              style={{
+                fontSize: "11px",
+                color: testStatus === "success" ? "#4ade80" : "#fca5a5",
+                fontFamily: "monospace",
+              }}
+            >
+              {testMessage}
+            </div>
+          </Card>
         )}
 
         <div
           style={{
             fontSize: "10px",
-            opacity: 0.6,
+            color: "rgba(255,255,255,0.5)",
             marginTop: "12px",
             lineHeight: "1.4",
+            fontFamily: "monospace",
           }}
         >
-          💡 Your API key is stored locally in your browser (localStorage) and never sent to our servers. It will persist across sessions.
+          💡 Your API key is stored locally in your browser (localStorage) and never sent to our servers. It will
+          persist across sessions.
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

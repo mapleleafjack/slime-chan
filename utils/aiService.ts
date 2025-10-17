@@ -34,7 +34,7 @@ export const generateSystemPrompt = (creature: CreatureData, customPersonality?:
 
 IMPORTANT: Always respond in English. You may occasionally use Japanese expressions for cuteness, but the main response must be in English.
 
-Keep responses SHORT (1-2 sentences max). Be cute, expressive, and in-character.
+Be cute, expressive, and in-character. Respond naturally - tell stories, share thoughts, and express yourself fully.
 You can use Japanese expressions sparingly for flavor, like:
 - ブロップ (buroppu - blob sound)
 - わくわく (wakuwaku - excited)
@@ -50,7 +50,7 @@ Remember previous messages in the conversation and reference them naturally. Kee
 
 IMPORTANT: Always respond in English. You communicate through gentle, nature-inspired expressions.
 
-Keep responses SHORT (1-2 sentences max). Be mysterious, peaceful, and nature-connected.
+Be mysterious, peaceful, and nature-connected. Respond naturally - share wisdom, tell stories, and express yourself fully.
 You can use nature-themed expressions like:
 - ✨ *glows softly*
 - 🍄 *spores drift gently*
@@ -67,10 +67,63 @@ You only appear at night and have a deep connection to the darkness and nature. 
 }
 
 /**
+ * Build a simplified prompt for local LLM (smaller models like GPT-2)
+ * This needs to be much simpler than the full system prompt
+ */
+export const buildLocalLLMPrompt = (
+  messages: Array<{ role: string; content: string }>,
+  creature?: CreatureData
+): string => {
+  const systemMsg = messages.find(m => m.role === "system")
+  const userMsg = messages.find(m => m.role === "user")
+  
+  if (!userMsg) return ""
+  
+  // Extract key personality traits from system message
+  let personality = "friendly"
+  if (systemMsg?.content.includes("playful")) personality = "playful"
+  else if (systemMsg?.content.includes("shy")) personality = "shy and timid"
+  else if (systemMsg?.content.includes("energetic")) personality = "super energetic"
+  else if (systemMsg?.content.includes("calm")) personality = "calm and peaceful"
+  else if (systemMsg?.content.includes("curious")) personality = "curious"
+  else if (systemMsg?.content.includes("sleepy")) personality = "sleepy and relaxed"
+  
+  // Determine character type
+  const isSlimeChar = systemMsg?.content.toLowerCase().includes("slime") || (creature && isSlime(creature))
+  const isMushroomChar = systemMsg?.content.toLowerCase().includes("mushroom") || (creature && isMushroom(creature))
+  
+  const characterType = isSlimeChar ? "slime creature" : isMushroomChar ? "mystical mushroom" : "cute creature"
+  
+  // Create a prompt with language instruction
+  let prompt = `You are a ${personality} ${characterType}. IMPORTANT: Respond in English with 2-3 complete sentences.\n\n`
+  
+  // Add conversation history if available (last 4 messages)
+  const conversationMsgs = messages.filter(m => m.role === "user" || m.role === "assistant").slice(-4)
+  if (conversationMsgs.length > 0) {
+    conversationMsgs.forEach(msg => {
+      if (msg.role === "user") {
+        prompt += `Person: ${msg.content}\n`
+      } else {
+        prompt += `${characterType}: ${msg.content}\n`
+      }
+    })
+  } else {
+    // First message
+    prompt += `Person: ${userMsg.content}\n`
+  }
+  
+  prompt += `${characterType}:`
+  
+  return prompt
+}
+
+/**
  * Call OpenAI-compatible API (works with OpenAI, DeepSeek, and other compatible APIs)
+ * Also supports local LLM through the Next.js API route
  */
 export const callAI = async (config: AIConfig, messages: AIMessage[]): Promise<AIResponse> => {
-  if (!config.apiKey || !config.baseUrl) {
+  // Local LLM doesn't require API key
+  if (config.provider !== "local" && (!config.apiKey || !config.baseUrl)) {
     return {
       success: false,
       message: "",
@@ -78,13 +131,28 @@ export const callAI = async (config: AIConfig, messages: AIMessage[]): Promise<A
     }
   }
 
+  // For local LLM, ensure baseUrl is set
+  if (config.provider === "local" && !config.baseUrl) {
+    return {
+      success: false,
+      message: "",
+      error: "Local LLM endpoint not configured.",
+    }
+  }
+
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    }
+
+    // Only add Authorization header for non-local providers
+    if (config.provider !== "local" && config.apiKey) {
+      headers["Authorization"] = `Bearer ${config.apiKey}`
+    }
+
     const response = await fetch(`${config.baseUrl}/chat/completions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
         model: config.model,
         messages,

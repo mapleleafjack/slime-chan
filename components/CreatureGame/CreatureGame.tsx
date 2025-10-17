@@ -63,6 +63,7 @@ const CreatureGameContent = () => {
 
   return (
     <div className="game-container">
+      <MainMenu />
       <div
         className={`slime-game ${currentPhase === DayPhase.DAY ? "day-mode" : ""}`}
         style={{ backgroundImage: `url(${backgroundImage})` }}
@@ -81,7 +82,6 @@ const CreatureGameContent = () => {
         />
         <NightSparkles />
 
-        <MainMenu />
         <MainWidget currentDateTime={currentDateTime} />
         <CreatureManager />
       </div>

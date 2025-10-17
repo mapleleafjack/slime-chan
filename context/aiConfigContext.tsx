@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
 
-export type AIProvider = "openai" | "deepseek" | "custom"
+export type AIProvider = "openai" | "deepseek" | "local" | "custom"
 
 export interface AIConfig {
   provider: AIProvider
@@ -21,12 +21,12 @@ interface AIConfigContextType {
 }
 
 const DEFAULT_CONFIG: AIConfig = {
-  provider: "deepseek",
+  provider: "local",
   apiKey: "",
-  baseUrl: "https://api.deepseek.com/v1",
-  model: "deepseek-chat",
+  baseUrl: "/api/local-llm",
+  model: "local-llm",
   temperature: 0.8,
-  maxTokens: 150,
+  maxTokens: 300,
 }
 
 const PROVIDER_DEFAULTS: Record<AIProvider, { baseUrl: string; model: string }> = {
@@ -37,6 +37,10 @@ const PROVIDER_DEFAULTS: Record<AIProvider, { baseUrl: string; model: string }> 
   deepseek: {
     baseUrl: "https://api.deepseek.com/v1",
     model: "deepseek-chat",
+  },
+  local: {
+    baseUrl: "/api/local-llm",
+    model: "local-llm",
   },
   custom: {
     baseUrl: "",
@@ -101,7 +105,7 @@ export const AIConfigProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.removeItem("slime-ai-config")
   }, [])
 
-  const isConfigured = config.apiKey.trim().length > 0
+  const isConfigured = config.provider === "local" || config.apiKey.trim().length > 0
 
   return (
     <AIConfigContext.Provider value={{ config, updateConfig, isConfigured, resetConfig }}>
