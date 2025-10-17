@@ -258,20 +258,38 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
     case "INCREMENT_WALK_FRAME":
       return {
         ...state,
-        creatures: state.creatures.map((creature) =>
-          creature.id === action.payload
-            ? { ...creature, walkFrame: (creature.walkFrame + 1) % ANIMATION_CONFIG.totalWalkFrames }
-            : creature,
-        ),
+        creatures: state.creatures.map((creature) => {
+          if (creature.id !== action.payload) return creature
+          
+          // Determine max frames based on creature type
+          let maxFrames = ANIMATION_CONFIG.totalWalkFrames // Default for slimes
+          if (creature.creatureType === "mushroom") {
+            maxFrames = 4 // Mushroom walk frames
+          }
+          
+          return {
+            ...creature,
+            walkFrame: (creature.walkFrame + 1) % maxFrames,
+          }
+        }),
       }
     case "INCREMENT_IDLE_FRAME":
       return {
         ...state,
-        creatures: state.creatures.map((creature) =>
-          creature.id === action.payload
-            ? { ...creature, idleFrame: (creature.idleFrame + 1) % ANIMATION_CONFIG.totalIdleFrames }
-            : creature,
-        ),
+        creatures: state.creatures.map((creature) => {
+          if (creature.id !== action.payload) return creature
+          
+          // Determine max frames based on creature type
+          let maxFrames = ANIMATION_CONFIG.totalIdleFrames // Default for slimes
+          if (creature.creatureType === "mushroom") {
+            maxFrames = 9 // Mushroom idle frames
+          }
+          
+          return {
+            ...creature,
+            idleFrame: (creature.idleFrame + 1) % maxFrames,
+          }
+        }),
       }
     case "SET_BEHAVIOR":
       return {
