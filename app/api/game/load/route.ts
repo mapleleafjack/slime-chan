@@ -31,11 +31,20 @@ export async function GET(request: NextRequest) {
 
     if (!gameState) {
       console.log('ℹ️ No saved game found for user:', session.userId)
-      return NextResponse.json<GameStateResponse>({
-        success: true,
-        message: 'No saved game found',
-        gameState: undefined,
-      })
+      return NextResponse.json<GameStateResponse>(
+        {
+          success: true,
+          message: 'No saved game found',
+          gameState: undefined,
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          }
+        }
+      )
     }
 
     console.log('📥 Loading from database:', {
@@ -49,11 +58,20 @@ export async function GET(request: NextRequest) {
       })),
     })
 
-    return NextResponse.json<GameStateResponse>({
-      success: true,
-      message: 'Game loaded successfully',
-      gameState,
-    })
+    return NextResponse.json<GameStateResponse>(
+      {
+        success: true,
+        message: 'Game loaded successfully',
+        gameState,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      }
+    )
   } catch (error) {
     console.error('Load game error:', error)
     return NextResponse.json<GameStateResponse>(

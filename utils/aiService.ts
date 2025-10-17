@@ -33,7 +33,11 @@ const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
 /**
  * Generate a system prompt that gives the AI context about the creature
  */
-export const generateSystemPrompt = (creature: CreatureData, customPersonality?: string): string => {
+export const generateSystemPrompt = (
+  creature: CreatureData, 
+  customPersonality?: string,
+  otherCreatures?: CreatureData[]
+): string => {
   const personalityTrait = customPersonality || PERSONALITY_DESCRIPTIONS[creature.personality] || "playful and friendly"
   const { affection, trust, mood, relationshipLevel, totalInteractions } = creature.relationship
   
@@ -89,6 +93,22 @@ export const generateSystemPrompt = (creature: CreatureData, customPersonality?:
       moodContext = "You're feeling neutral and relaxed. Just be yourself."
   }
   
+  // Generate context about other creatures in the scene
+  let othersContext = ""
+  if (otherCreatures && otherCreatures.length > 0) {
+    const othersList = otherCreatures
+      .filter(c => c.id !== creature.id) // Don't include self
+      .map(c => {
+        const otherName = c.firstName || `${c.creatureType}${c.color !== 'default' ? ` (${c.color})` : ''}`
+        return `  - ${otherName}: ${c.creatureType} | ${c.personality} personality`
+      })
+      .join('\n')
+    
+    if (othersList) {
+      othersContext = `\nOther creatures nearby:\n${othersList}\n- You can see them, interact with them, and mention them in conversation\n- They have their own personalities and might react to things differently than you\n- You can ask your friend about them or comment on what they're doing`
+    }
+  }
+  
   if (isSlime(creature)) {
     const creatureName = creature.firstName || `${creature.color} slime`
     const hasName = !!creature.firstName
@@ -101,6 +121,8 @@ Your Properties:
 - Personality: ${creature.personality}
 - Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
 - Conversations so far: ${totalInteractions}
+
+${othersContext}
 
 ${relationshipContext} ${trustContext} ${moodContext}
 
@@ -139,6 +161,8 @@ Your Properties:
 - Personality: ${creature.personality}
 - Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
 - Conversations so far: ${totalInteractions}
+
+${othersContext}
 
 ${relationshipContext} ${trustContext} ${moodContext}
 
@@ -253,11 +277,12 @@ export const generateSlimeResponse = async (
   userMessage: string,
   personality?: string,
   conversationHistory?: Message[],
+  otherCreatures?: CreatureData[]
 ): Promise<AIResponse> => {
   const messages: AIMessage[] = [
     {
       role: "system",
-      content: generateSystemPrompt(creature, personality),
+      content: generateSystemPrompt(creature, personality, otherCreatures),
     },
   ]
 
@@ -283,6 +308,7 @@ export const generateAutonomousSpeech = async (
   config: AIConfig,
   creature: CreatureData,
   personality?: string,
+  otherCreatures?: CreatureData[]
 ): Promise<AIResponse> => {
   const slimePrompts = [
     "What are you thinking about right now?",
@@ -303,7 +329,7 @@ export const generateAutonomousSpeech = async (
   const prompts = isMushroom(creature) ? mushroomPrompts : slimePrompts
   const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)]
 
-  return generateSlimeResponse(config, creature, randomPrompt, personality)
+  return generateSlimeResponse(config, creature, randomPrompt, personality, undefined, otherCreatures)
 }
 
 /**

@@ -179,12 +179,17 @@ export const useCreatureAI = (creatureId: string) => {
 
         // Always use AI (DeepSeek is now hardcoded)
         console.log(`🤖 Using AI to respond to: "${message}"`)
+        
+        // Get other creatures for context
+        const otherCreatures = state.creatures.filter(c => c.id !== creatureId)
+        
         const aiResponse = await generateSlimeResponse(
           config,
           currentCreature,
           message,
           currentCreature.personality,
           currentCreature.conversationHistory,
+          otherCreatures
         )
 
         if (aiResponse.success) {
@@ -285,8 +290,11 @@ export const useCreatureAI = (creatureId: string) => {
 
         let responseText: string
 
+        // Get other creatures for context
+        const otherCreatures = state.creatures.filter(c => c.id !== creatureId)
+
         // Always use AI (DeepSeek is now hardcoded)
-        const aiResponse = await generateAutonomousSpeech(config, creature, creature.personality)
+        const aiResponse = await generateAutonomousSpeech(config, creature, creature.personality, otherCreatures)
         responseText = aiResponse.success ? aiResponse.message : getFallbackResponse(creature)
 
         dispatch({ type: "UPDATE_BUBBLE_TEXT", payload: { id: creatureId, text: responseText } })

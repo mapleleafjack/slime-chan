@@ -23,24 +23,37 @@ export const useGamePersistence = () => {
   const lastUserIdRef = useRef<string | null>(null)
   const lastMeaningfulStateRef = useRef<string>("")
   const previousCreaturesSignatureRef = useRef<string>("")
-  const [hasLoaded, setHasLoaded] = useState(false)
+  const hasLoadedRef = useRef(false) // Changed to ref to track across re-renders
+  const mountCounterRef = useRef(0) // Track component mounts
   const [isLoading, setIsLoading] = useState(false)
 
   // Load game state when user logs in
   const loadGameState = useCallback(async () => {
-    if (!isAuthenticated || !user || isLoadingRef.current) return
+    console.log("🎯 loadGameState called:", { 
+      isAuthenticated, 
+      hasUser: !!user, 
+      isLoading: isLoadingRef.current,
+      hasLoaded: hasLoadedRef.current 
+    })
     
-    // Check if this is a different user or first load for this user
-    const shouldLoad = !hasLoaded || lastUserIdRef.current !== user.id
-    if (!shouldLoad) return
-
+    if (!isAuthenticated || !user || isLoadingRef.current) {
+      console.log("❌ Skipping load:", { isAuthenticated, hasUser: !!user, isLoading: isLoadingRef.current })
+      return
+    }
+    
+    // Always load on mount/login - removed the hasLoaded guard to ensure data is loaded on page refresh
     isLoadingRef.current = true
     setIsLoading(true)
-    console.log("Loading game state for user:", user.username)
+    console.log("📦 Loading game state for user:", user.username)
     
     try {
       const response = await fetch("/api/game/load", {
         credentials: "include",
+        cache: "no-store", // Prevent browser caching
+        headers: {
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        }
       })
 
       if (response.ok) {
@@ -59,7 +72,8 @@ export const useGamePersistence = () => {
             activeCreature: gameState.activeCreatureId,
           })
 
-          // Clear existing creatures first
+          // Clear existing creatures first to ensure clean restore
+          console.log("🧹 Clearing existing creatures to restore saved state")
           creatureDispatch({ type: "CLEAR_ALL_CREATURES" })
 
           // Restore creatures
@@ -69,6 +83,8 @@ export const useGamePersistence = () => {
               console.log(`  Adding creature: ${creature.firstName || creature.creatureType} (${creature.id})`)
               creatureDispatch({ type: "ADD_CREATURE", payload: creature })
             })
+          } else {
+            console.log("  No creatures to restore")
           }
 
           // Restore active creature
@@ -84,12 +100,12 @@ export const useGamePersistence = () => {
             setDebugTime(new Date(gameState.debugTime))
           }
 
-          setHasLoaded(true)
+          hasLoadedRef.current = true
           lastUserIdRef.current = user.id
           console.log("✅ Game loaded successfully")
         } else {
           console.log("ℹ️ No saved game found, starting fresh")
-          setHasLoaded(true)
+          hasLoadedRef.current = true
           lastUserIdRef.current = user.id
         }
       }
@@ -99,7 +115,7 @@ export const useGamePersistence = () => {
       isLoadingRef.current = false
       setIsLoading(false)
     }
-  }, [isAuthenticated, user, creatureDispatch, setDebugTime, hasLoaded])
+  }, [isAuthenticated, user, creatureDispatch, setDebugTime])
 
   // Save game state
   const saveGameState = useCallback(async () => {
@@ -114,7 +130,13 @@ export const useGamePersistence = () => {
 
       console.log("💾 Saving game state:", {
         creatureCount: gameState.creatures?.length,
-        creatureNames: gameState.creatures?.map(c => ({ id: c.id, name: c.firstName, type: c.creatureType })),
+        creatureDetails: gameState.creatures?.map(c => ({ 
+          id: c.id, 
+          name: c.firstName, 
+          type: c.creatureType,
+          conversationHistory: c.conversationHistory,
+          historyLength: c.conversationHistory?.length || 0
+        })),
         activeCreature: gameState.activeCreatureId,
       })
 
@@ -153,14 +175,38 @@ export const useGamePersistence = () => {
 
   // Load game state on mount or when user logs in
   useEffect(() => {
+    // Increment mount counter
+    mountCounterRef.current += 1
+    const currentMount = mountCounterRef.current
+    console.log(`🔍 Load effect triggered (mount #${currentMount}):`, { 
+      isAuthenticated, 
+      hasUser: !!user,
+      userId: user?.id,
+      hasLoaded: hasLoadedRef.current,
+      lastUserId: lastUserIdRef.current
+    })
+    
     if (isAuthenticated && user) {
-      loadGameState()
+      // Only load if:
+      // 1. We haven't loaded for this user yet, OR
+      // 2. The user ID actually changed (different user logged in)
+      const needsLoad = !hasLoadedRef.current || lastUserIdRef.current !== user.id
+      
+      if (needsLoad) {
+        const reason = !hasLoadedRef.current ? 'first load' : 'user changed'
+        console.log(`🔄 Mount #${currentMount}: Triggering load (reason: ${reason})`)
+        loadGameState()
+      } else {
+        console.log(`⏭️ Mount #${currentMount}: Already loaded for user ${user.id}, skipping to prevent data loss`)
+      }
     } else {
       // Reset on logout
-      setHasLoaded(false)
+      hasLoadedRef.current = false
       lastUserIdRef.current = null
+      console.log(`🚪 Mount #${currentMount}: User logged out, resetting load state`)
     }
-  }, [isAuthenticated, user, loadGameState])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]) // Intentionally NOT including loadGameState to prevent re-triggering on user object changes
 
   // Auto-save interval
   useEffect(() => {
@@ -221,7 +267,7 @@ export const useGamePersistence = () => {
         personality: creature.personality,
         capabilities: creature.capabilities,
         relationship: creature.relationship,
-        conversationHistoryLength: creature.conversationHistory?.length || 0,
+        conversationHistory: creature.conversationHistory, // Track full conversation, not just length
         // Only track mode changes, not current behavior or animation state
         mode: creature.mode,
         // Explicitly NOT including: position, direction, isWalking, isJumping, 
@@ -233,7 +279,7 @@ export const useGamePersistence = () => {
 
   // Save on important state changes (debounced)
   useEffect(() => {
-    if (!isAuthenticated || creatureState.creatures.length === 0 || !hasLoaded) {
+    if (!isAuthenticated || creatureState.creatures.length === 0 || !hasLoadedRef.current) {
       return
     }
 
@@ -252,32 +298,45 @@ export const useGamePersistence = () => {
       lastMeaningfulStateRef.current = meaningfulState
       debouncedSave()
     }
-  }, [isAuthenticated, hasLoaded, meaningfulState, debouncedSave, creatureState.creatures])
+  }, [isAuthenticated, meaningfulState, debouncedSave, creatureState.creatures])
 
-  // Save before page unload
+  // Save before page unload or when tab becomes hidden
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (isAuthenticated) {
-        // Use synchronous approach for beforeunload
-        navigator.sendBeacon(
-          "/api/game/save",
-          JSON.stringify({
-            creatures: creatureState.creatures,
-            activeCreatureId: creatureState.activeCreatureId,
-            debugTime,
-          })
-        )
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isAuthenticated && creatureState.creatures.length > 0) {
+        console.log("💾 beforeunload: Saving game state")
+        // Use sendBeacon for reliable save on page close
+        const blob = new Blob([JSON.stringify({
+          creatures: creatureState.creatures,
+          activeCreatureId: creatureState.activeCreatureId,
+          debugTime,
+        })], { type: 'application/json' })
+        
+        navigator.sendBeacon("/api/game/save", blob)
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isAuthenticated && creatureState.creatures.length > 0) {
+        console.log("💾 visibilitychange: Saving game state")
+        // Save when tab is hidden (more reliable than beforeunload)
+        saveGameState()
       }
     }
 
     window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [isAuthenticated, creatureState.creatures, creatureState.activeCreatureId, debugTime])
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [isAuthenticated, creatureState.creatures, creatureState.activeCreatureId, debugTime, saveGameState])
 
   return {
     saveGameState,
     loadGameState,
-    hasLoaded,
+    hasLoaded: hasLoadedRef.current,
     isLoading,
     saveNow: saveGameState, // Alias for immediate saves
   }
