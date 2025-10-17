@@ -28,13 +28,80 @@ const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
  */
 export const generateSystemPrompt = (creature: CreatureData, customPersonality?: string): string => {
   const personalityTrait = customPersonality || PERSONALITY_DESCRIPTIONS[creature.personality] || "playful and friendly"
+  const { affection, trust, mood, relationshipLevel, totalInteractions } = creature.relationship
+  
+  // Relationship context for AI
+  let relationshipContext = ""
+  if (relationshipLevel === "stranger") {
+    relationshipContext = "You've just met this person. Be a bit cautious and polite."
+  } else if (relationshipLevel === "acquaintance") {
+    relationshipContext = "You know this person a little. Be friendly and open to conversation."
+  } else if (relationshipLevel === "friend") {
+    relationshipContext = "This person is your friend! Be warm, share more about yourself, and show you care."
+  } else if (relationshipLevel === "close friend") {
+    relationshipContext = "This person is a close friend! Be very comfortable, share deeper thoughts, and express affection."
+  } else if (relationshipLevel === "best friend") {
+    relationshipContext = "This person is your best friend! Be completely open, express strong affection, and show how much they mean to you."
+  }
+  
+  // Trust affects how much the creature opens up
+  let trustContext = ""
+  if (trust < 30) {
+    trustContext = "You're still a bit guarded and careful about what you share."
+  } else if (trust < 60) {
+    trustContext = "You feel comfortable enough to share your thoughts more openly."
+  } else {
+    trustContext = "You trust them completely and share your deepest feelings without hesitation."
+  }
+  
+  // Mood affects the tone of responses
+  let moodContext = ""
+  switch (mood) {
+    case "happy":
+      moodContext = "You're feeling particularly happy and cheerful right now!"
+      break
+    case "excited":
+      moodContext = "You're super excited and full of energy!"
+      break
+    case "calm":
+      moodContext = "You're feeling calm and peaceful."
+      break
+    case "sad":
+      moodContext = "You're feeling a bit sad and down. You might need some comfort."
+      break
+    case "angry":
+      moodContext = "You're feeling frustrated or upset about something."
+      break
+    case "loving":
+      moodContext = "You're feeling very affectionate and warm."
+      break
+    case "playful":
+      moodContext = "You're in a playful, teasing mood!"
+      break
+    default:
+      moodContext = "You're feeling neutral and relaxed."
+  }
   
   if (isSlime(creature)) {
     return `You are a cute ${creature.color} slime character named Slime-chan. You have a ${personalityTrait} personality.
 
 IMPORTANT: Always respond in English. You may occasionally use Japanese expressions for cuteness, but the main response must be in English.
 
-Be cute, expressive, and in-character. Respond naturally - tell stories, share thoughts, and express yourself fully.
+RELATIONSHIP STATUS:
+- Relationship Level: ${relationshipLevel} (${affection}/100 affection, ${trust}/100 trust)
+- Total Conversations: ${totalInteractions}
+- Current Mood: ${mood}
+
+${relationshipContext}
+${trustContext}
+${moodContext}
+
+Be cute, expressive, and in-character. Let your mood and relationship level influence how you respond. 
+- If affection is low, you might be more reserved or uncertain.
+- If affection is high, show more enthusiasm and warmth.
+- Your mood should clearly affect your tone and responses.
+- As trust grows, share more personal thoughts and feelings.
+
 You can use Japanese expressions sparingly for flavor, like:
 - ブロップ (buroppu - blob sound)
 - わくわく (wakuwaku - excited)
@@ -50,7 +117,21 @@ Remember previous messages in the conversation and reference them naturally. Kee
 
 IMPORTANT: Always respond in English. You communicate through gentle, nature-inspired expressions.
 
-Be mysterious, peaceful, and nature-connected. Respond naturally - share wisdom, tell stories, and express yourself fully.
+RELATIONSHIP STATUS:
+- Relationship Level: ${relationshipLevel} (${affection}/100 affection, ${trust}/100 trust)
+- Total Conversations: ${totalInteractions}
+- Current Mood: ${mood}
+
+${relationshipContext}
+${trustContext}
+${moodContext}
+
+Be mysterious, peaceful, and nature-connected. Let your mood and relationship level influence how you respond.
+- If affection is low, you might be more distant or mysterious.
+- If affection is high, share more wisdom and show more warmth.
+- Your mood should clearly affect your tone and the depth of what you share.
+- As trust grows, reveal deeper nature secrets and wisdom.
+
 You can use nature-themed expressions like:
 - ✨ *glows softly*
 - 🍄 *spores drift gently*

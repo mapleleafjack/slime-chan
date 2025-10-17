@@ -11,6 +11,8 @@ import type {
   MenuState,
   Message,
   Personality,
+  MoodType,
+  RelationshipLevel,
 } from "@/types/creatureTypes"
 import type React from "react"
 import { createContext, useContext, useReducer } from "react"
@@ -39,6 +41,11 @@ type CreatureAction =
   | { type: "ADD_MESSAGE"; payload: { id: string; message: Message } }
   | { type: "CLEAR_CONVERSATION"; payload: string }
   | { type: "SET_PERSONALITY"; payload: { id: string; personality: Personality } }
+  // Relationship property actions
+  | { type: "UPDATE_AFFECTION"; payload: { id: string; delta: number } } // Change affection by delta
+  | { type: "UPDATE_TRUST"; payload: { id: string; delta: number } } // Change trust by delta
+  | { type: "SET_MOOD"; payload: { id: string; mood: MoodType } } // Set mood directly
+  | { type: "INCREMENT_INTERACTIONS"; payload: string } // Increment total interactions
   // Slime-specific actions
   | { type: "SET_SLIME_COLOR"; payload: { id: string; color: SlimeColor } }
   | { type: "SET_JUMPING"; payload: { id: string; value: boolean } }
@@ -79,12 +86,32 @@ const getRandomPersonality = (): Personality => {
   return personalities[Math.floor(Math.random() * personalities.length)]
 }
 
+// Helper function to determine relationship level based on affection
+const getRelationshipLevel = (affection: number): RelationshipLevel => {
+  if (affection >= 80) return "best friend"
+  if (affection >= 60) return "close friend"
+  if (affection >= 40) return "friend"
+  if (affection >= 20) return "acquaintance"
+  return "stranger"
+}
+
+// Helper function to create initial relationship properties
+const createInitialRelationship = () => ({
+  affection: 10, // Start with a bit of affection
+  trust: 10, // Start with a bit of trust
+  mood: "neutral" as MoodType,
+  relationshipLevel: "stranger" as RelationshipLevel,
+  totalInteractions: 0,
+  lastMoodChange: Date.now(),
+})
+
 // Factory functions for creating initial creatures
 export const createInitialSlime = (id: string, color: SlimeColor, position: number): SlimeData => ({
   id,
   creatureType: "slime",
   color,
   personality: getRandomPersonality(),
+  relationship: createInitialRelationship(),
   isWalking: false,
   isJumping: false,
   isSleeping: false,
@@ -117,6 +144,7 @@ export const createInitialMushroom = (id: string, position: number): MushroomDat
   creatureType: "mushroom",
   color: "default",
   personality: getRandomPersonality(),
+  relationship: createInitialRelationship(),
   isWalking: true, // Mushrooms start walking
   isGlowing: false,
   glowIntensity: 0,
@@ -421,6 +449,69 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         ...state,
         creatures: state.creatures.map((creature) =>
           creature.id === action.payload ? { ...creature, conversationHistory: [] } : creature,
+        ),
+      }
+    case "UPDATE_AFFECTION":
+      return {
+        ...state,
+        creatures: state.creatures.map((creature) => {
+          if (creature.id !== action.payload.id) return creature
+          const newAffection = Math.max(0, Math.min(100, creature.relationship.affection + action.payload.delta))
+          const newLevel = getRelationshipLevel(newAffection)
+          return {
+            ...creature,
+            relationship: {
+              ...creature.relationship,
+              affection: newAffection,
+              relationshipLevel: newLevel,
+            },
+          }
+        }),
+      }
+    case "UPDATE_TRUST":
+      return {
+        ...state,
+        creatures: state.creatures.map((creature) => {
+          if (creature.id !== action.payload.id) return creature
+          const newTrust = Math.max(0, Math.min(100, creature.relationship.trust + action.payload.delta))
+          return {
+            ...creature,
+            relationship: {
+              ...creature.relationship,
+              trust: newTrust,
+            },
+          }
+        }),
+      }
+    case "SET_MOOD":
+      return {
+        ...state,
+        creatures: state.creatures.map((creature) =>
+          creature.id === action.payload.id
+            ? {
+                ...creature,
+                relationship: {
+                  ...creature.relationship,
+                  mood: action.payload.mood,
+                  lastMoodChange: Date.now(),
+                },
+              }
+            : creature,
+        ),
+      }
+    case "INCREMENT_INTERACTIONS":
+      return {
+        ...state,
+        creatures: state.creatures.map((creature) =>
+          creature.id === action.payload
+            ? {
+                ...creature,
+                relationship: {
+                  ...creature.relationship,
+                  totalInteractions: creature.relationship.totalInteractions + 1,
+                },
+              }
+            : creature,
         ),
       }
     default:

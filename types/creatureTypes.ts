@@ -27,6 +27,23 @@ export type Message = {
 }
 
 /**
+ * Visual Novel-style relationship properties
+ * These affect how the creature responds and interacts
+ */
+export type RelationshipLevel = "stranger" | "acquaintance" | "friend" | "close friend" | "best friend"
+
+export type MoodType = "happy" | "excited" | "calm" | "sad" | "angry" | "neutral" | "loving" | "playful"
+
+export type RelationshipProperties = {
+  affection: number // 0-100: How much the creature likes you
+  trust: number // 0-100: How much the creature trusts you
+  mood: MoodType // Current emotional state
+  relationshipLevel: RelationshipLevel // Overall relationship status
+  totalInteractions: number // Total number of conversations
+  lastMoodChange: number // Timestamp of last mood change
+}
+
+/**
  * Defines what capabilities a creature has
  * This allows creatures to have different abilities
  */
@@ -46,6 +63,7 @@ export type BaseCreatureData = {
   creatureType: CreatureType
   capabilities: CreatureCapabilities
   personality: Personality
+  relationship: RelationshipProperties // Visual novel properties
   isWalking: boolean
   direction: Direction
   mode: Mode

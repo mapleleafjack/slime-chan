@@ -168,6 +168,36 @@ const CreatureDetailPanel: React.FC = () => {
     sleepy: "A bit drowsy but adorable. Loves to rest.",
   }
 
+  // Mood emoji mapping
+  const moodEmojis: Record<string, string> = {
+    happy: "😊",
+    excited: "🤩",
+    calm: "😌",
+    sad: "😢",
+    angry: "😠",
+    neutral: "😐",
+    loving: "🥰",
+    playful: "😄",
+  }
+
+  // Get affection bar color based on level
+  const getAffectionColor = (affection: number) => {
+    if (affection >= 80) return "#ff1493" // Deep pink - best friend
+    if (affection >= 60) return "#ff69b4" // Hot pink - close friend
+    if (affection >= 40) return "#ffa500" // Orange - friend
+    if (affection >= 20) return "#ffd700" // Gold - acquaintance
+    return "#808080" // Gray - stranger
+  }
+
+  // Get trust bar color
+  const getTrustColor = (trust: number) => {
+    if (trust >= 80) return "#00ff00" // Bright green
+    if (trust >= 60) return "#7fff00" // Chartreuse
+    if (trust >= 40) return "#ffff00" // Yellow
+    if (trust >= 20) return "#ffa500" // Orange
+    return "#808080" // Gray
+  }
+
   return (
     <div
       style={{
@@ -293,6 +323,157 @@ const CreatureDetailPanel: React.FC = () => {
         >
           <span>{getStatusText()}</span>
           <span>{activeCreature?.mode === "user" ? "🎮 Manual" : "🤖 Auto"}</span>
+        </div>
+      </Card>
+
+      {/* Relationship Properties Card */}
+      <Card
+        bg="rgba(0, 0, 0, 0.85)"
+        borderColor="rgba(255,255,255,0.3)"
+        style={{
+          padding: "16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+          pointerEvents: "auto",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <h4
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: "14px",
+            fontWeight: "bold",
+            color: "#ffffff",
+            fontFamily: "monospace",
+          }}
+        >
+          💕 Relationship
+        </h4>
+
+        {/* Relationship Level */}
+        <div style={{ marginBottom: "12px" }}>
+          <div
+            style={{
+              fontSize: "13px",
+              fontWeight: "bold",
+              color: "#ff69b4",
+              marginBottom: "4px",
+              fontFamily: "monospace",
+              textTransform: "capitalize",
+            }}
+          >
+            {activeCreature?.relationship.relationshipLevel}
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.6)",
+              fontFamily: "monospace",
+            }}
+          >
+            {activeCreature?.relationship.totalInteractions} conversations
+          </div>
+        </div>
+
+        {/* Current Mood */}
+        <div style={{ marginBottom: "12px" }}>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: "6px",
+              fontFamily: "monospace",
+            }}
+          >
+            Mood: {moodEmojis[activeCreature?.relationship.mood || "neutral"]}{" "}
+            <span style={{ textTransform: "capitalize" }}>{activeCreature?.relationship.mood}</span>
+          </div>
+        </div>
+
+        {/* Affection Bar */}
+        <div style={{ marginBottom: "12px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: "4px",
+              fontFamily: "monospace",
+            }}
+          >
+            <span>❤️ Affection</span>
+            <span>{activeCreature?.relationship.affection || 0}/100</span>
+          </div>
+          <div
+            style={{
+              width: "100%",
+              height: "12px",
+              backgroundColor: "rgba(255,255,255,0.2)",
+              border: "2px solid rgba(0,0,0,0.5)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${activeCreature?.relationship.affection || 0}%`,
+                height: "100%",
+                backgroundColor: getAffectionColor(activeCreature?.relationship.affection || 0),
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Trust Bar */}
+        <div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: "4px",
+              fontFamily: "monospace",
+            }}
+          >
+            <span>🤝 Trust</span>
+            <span>{activeCreature?.relationship.trust || 0}/100</span>
+          </div>
+          <div
+            style={{
+              width: "100%",
+              height: "12px",
+              backgroundColor: "rgba(255,255,255,0.2)",
+              border: "2px solid rgba(0,0,0,0.5)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${activeCreature?.relationship.trust || 0}%`,
+                height: "100%",
+                backgroundColor: getTrustColor(activeCreature?.relationship.trust || 0),
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Relationship Tips */}
+        <div
+          style={{
+            marginTop: "12px",
+            paddingTop: "12px",
+            borderTop: "2px solid rgba(255,255,255,0.2)",
+            fontSize: "10px",
+            color: "rgba(255,255,255,0.6)",
+            fontFamily: "monospace",
+            lineHeight: "1.4",
+          }}
+        >
+          💡 Tip: Be positive and chat often to build affection and trust!
         </div>
       </Card>
 
