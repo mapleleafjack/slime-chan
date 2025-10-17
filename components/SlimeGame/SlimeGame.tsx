@@ -9,16 +9,15 @@ import MainMenu from "./MainMenu"
 import NightSparkles from "./NightSparkles"
 import SlimeManager from "./SlimeManager"
 import SunnyOverlay from "./SunnyOverlay"
-import Mushroom from "./Mushroom"
 import SlimeDetailPanel from "./SlimeDetailPanel"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { calculateWeather, getWeatherDuration, Weather } from "@/utils/weatherUtils"
 import { DayPhase } from "@/utils/slimeUtils"
-import { SlimeProvider, useSlime } from "@/context/slimeContext"
+import { CreatureProvider, useCreature } from "@/context/creatureContext"
 
 const SlimeGameContent = () => {
   const { currentPhase, currentDateTime, dayPhaseOpacity } = useDayCycle()
-  const { dispatch } = useSlime()
+  const { dispatch } = useCreature()
 
   // Use the provided background image
   const backgroundImage = "/assets/background.png"
@@ -26,12 +25,12 @@ const SlimeGameContent = () => {
   const defaultWeather: Weather = Weather.SUNNY
   const [weather, setWeather] = useState<Weather>(defaultWeather)
 
-  // Handle background click to deselect slimes
+  // Handle background click to deselect creatures
   const handleBackgroundClick = useCallback(
     (e: React.MouseEvent) => {
-      // Only deselect if clicking directly on the background (not on a slime or UI element)
+      // Only deselect if clicking directly on the background (not on a creature or UI element)
       if (e.target === e.currentTarget) {
-        dispatch({ type: "SET_ACTIVE_SLIME", payload: null })
+        dispatch({ type: "SET_ACTIVE_CREATURE", payload: null })
         dispatch({ type: "HIDE_ALL_BUBBLES", payload: undefined })
       }
     },
@@ -72,9 +71,6 @@ const SlimeGameContent = () => {
         {/* Only show sunny overlay during DAY phase */}
         {currentPhase === DayPhase.DAY && weather === Weather.SUNNY && <SunnyOverlay />}
 
-        {/* Mushroom is now placed before the night overlay */}
-        <Mushroom />
-
         <div
           className="night-overlay"
           style={{
@@ -96,8 +92,8 @@ const SlimeGameContent = () => {
 
 export default function SlimeGame() {
   return (
-    <SlimeProvider>
+    <CreatureProvider>
       <SlimeGameContent />
-    </SlimeProvider>
+    </CreatureProvider>
   )
 }

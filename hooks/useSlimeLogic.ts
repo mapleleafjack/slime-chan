@@ -3,7 +3,8 @@
 import { useEffect, useCallback, useRef, useState } from "react"
 import { ANIMATION_CONFIG } from "@/components/SlimeGame/animationConfig"
 import { getBehaviorDuration, getRandomPhrase, getRandomJapanesePhrase, randomInt } from "@/utils/slimeUtils"
-import { type Behavior, useSlime } from "@/context/slimeContext"
+import { useCreature } from "@/context/creatureContext"
+import { isSlime, type Behavior } from "@/types/creatureTypes"
 
 // Track behavior state outside of component to prevent re-renders
 const slimeBehaviorState = new Map<
@@ -19,8 +20,9 @@ const slimeBehaviorState = new Map<
 >()
 
 export const useSlimeLogic = (slimeId: string) => {
-  const { state, dispatch } = useSlime()
-  const slime = state.slimes.find((s) => s.id === slimeId)
+  const { state, dispatch } = useCreature()
+  const creature = state.creatures.find((c) => c.id === slimeId)
+  const slime = creature && isSlime(creature) ? creature : null
   const [isProcessingEdge, setIsProcessingEdge] = useState(false)
 
   // Initialize behavior state if not exists
@@ -346,7 +348,7 @@ export const useSlimeLogic = (slimeId: string) => {
         case "idle":
         default:
           // Make idle state shorter for unselected slimes
-          const isUnselected = state.activeSlimeId !== slimeId
+          const isUnselected = state.activeCreatureId !== slimeId
           if (isUnselected) {
             // Force a new behavior after a short idle period
             if (behaviorTimeoutRef.current) {
@@ -384,7 +386,7 @@ export const useSlimeLogic = (slimeId: string) => {
         behaviorTimeoutRef.current = null
       }, duration)
     },
-    [dispatch, pickNextBehavior, slimeId, state.activeSlimeId],
+    [dispatch, pickNextBehavior, slimeId, state.activeCreatureId],
   )
 
   // Modify the animation interval to allow for diagonal jumping
@@ -457,7 +459,7 @@ export const useSlimeLogic = (slimeId: string) => {
     if (!slime) return
 
     // Force unselected slimes to start behaviors if they're in auto mode
-    const isUnselected = state.activeSlimeId !== slimeId
+    const isUnselected = state.activeCreatureId !== slimeId
     const behaviorState = slimeBehaviorState.get(slimeId)
 
     if (
@@ -476,7 +478,7 @@ export const useSlimeLogic = (slimeId: string) => {
         pickNextBehavior()
       }
     }
-  }, [state.activeSlimeId, slimeId, slime, pickNextBehavior, runBehavior, isProcessingEdge])
+  }, [state.activeCreatureId, slimeId, slime, pickNextBehavior, runBehavior, isProcessingEdge])
 
   // Force activity for unselected slimes and detect stuck slimes
   useEffect(() => {
@@ -492,7 +494,7 @@ export const useSlimeLogic = (slimeId: string) => {
       const currentSlime = slimeRef.current
       if (!currentSlime) return
 
-      const isUnselected = state.activeSlimeId !== slimeId
+      const isUnselected = state.activeCreatureId !== slimeId
       const behaviorState = slimeBehaviorState.get(slimeId)
 
       if (
@@ -577,7 +579,7 @@ export const useSlimeLogic = (slimeId: string) => {
         clearInterval(forceActivityRef.current)
       }
     }
-  }, [slime, slimeId, state.activeSlimeId, pickNextBehavior, runBehavior, dispatch, isProcessingEdge])
+  }, [slime, slimeId, state.activeCreatureId, pickNextBehavior, runBehavior, dispatch, isProcessingEdge])
 
   // Function to handle transition to auto mode
   const transitionToAutoMode = useCallback(() => {
@@ -609,10 +611,10 @@ export const useSlimeLogic = (slimeId: string) => {
     if (!currentSlime) return
 
     // If this slime was active and is now deselected, immediately start AI behavior
-    if (state.activeSlimeId !== slimeId && currentSlime.mode === "user") {
+    if (state.activeCreatureId !== slimeId && currentSlime.mode === "user") {
       transitionToAutoMode()
     }
-  }, [state.activeSlimeId, slimeId, transitionToAutoMode])
+  }, [state.activeCreatureId, slimeId, transitionToAutoMode])
 
   // Idle detection
   useEffect(() => {

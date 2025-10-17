@@ -81,7 +81,10 @@ Adjust these for different response styles:
 ```
 context/
   aiConfigContext.tsx      - Manages API configuration and localStorage
-  slimeContext.tsx         - Extended with personality system
+  creatureContext.tsx      - Generic creature system with personality support
+
+types/
+  creatureTypes.ts         - Type definitions for creatures (Slime, Mushroom, etc.)
 
 utils/
   aiService.ts            - Core AI API integration
@@ -119,7 +122,7 @@ Validates API configuration.
 ## Customization
 
 ### Adding New Personalities
-Edit `context/slimeContext.tsx`:
+Edit `types/creatureTypes.ts`:
 
 ```typescript
 export type Personality = "playful" | "shy" | "energetic" | "calm" | "curious" | "sleepy" | "yourNewType"

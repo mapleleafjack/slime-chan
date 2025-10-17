@@ -1,5 +1,6 @@
 import type { AIConfig } from "@/context/aiConfigContext"
-import type { SlimeData, Message } from "@/context/slimeContext"
+import type { SlimeData, MushroomData, CreatureData, Message } from "@/types/creatureTypes"
+import { isSlime, isMushroom } from "@/types/creatureTypes"
 
 export interface AIMessage {
   role: "system" | "user" | "assistant"
@@ -23,12 +24,13 @@ const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
 }
 
 /**
- * Generate a system prompt that gives the AI context about the slime
+ * Generate a system prompt that gives the AI context about the creature
  */
-export const generateSystemPrompt = (slime: SlimeData, customPersonality?: string): string => {
-  const personalityTrait = customPersonality || PERSONALITY_DESCRIPTIONS[slime.personality] || "playful and friendly"
+export const generateSystemPrompt = (creature: CreatureData, customPersonality?: string): string => {
+  const personalityTrait = customPersonality || PERSONALITY_DESCRIPTIONS[creature.personality] || "playful and friendly"
   
-  return `You are a cute ${slime.color} slime character named Slime-chan. You have a ${personalityTrait} personality.
+  if (isSlime(creature)) {
+    return `You are a cute ${creature.color} slime character named Slime-chan. You have a ${personalityTrait} personality.
 
 IMPORTANT: Always respond in English. You may occasionally use Japanese expressions for cuteness, but the main response must be in English.
 
@@ -39,10 +41,29 @@ You can use Japanese expressions sparingly for flavor, like:
 - ふわふわ (fuwafuwa - fluffy)
 
 Current state:
-- Mood: ${slime.isSleeping ? "sleepy" : slime.isJumping ? "energetic" : slime.isWalking ? "active" : "relaxed"}
-- Activity: ${slime.isSleeping ? "sleeping" : slime.isJumping ? "jumping" : slime.isWalking ? "walking around" : "resting"}
+- Mood: ${creature.isSleeping ? "sleepy" : creature.isJumping ? "energetic" : creature.isWalking ? "active" : "relaxed"}
+- Activity: ${creature.isSleeping ? "sleeping" : creature.isJumping ? "jumping" : creature.isWalking ? "walking around" : "resting"}
 
 Remember previous messages in the conversation and reference them naturally. Keep your personality consistent throughout the conversation.`
+  } else if (isMushroom(creature)) {
+    return `You are a mystical glowing mushroom creature. You have a ${personalityTrait} personality.
+
+IMPORTANT: Always respond in English. You communicate through gentle, nature-inspired expressions.
+
+Keep responses SHORT (1-2 sentences max). Be mysterious, peaceful, and nature-connected.
+You can use nature-themed expressions like:
+- ✨ *glows softly*
+- 🍄 *spores drift gently*
+- 🌙 *emanates moonlight*
+
+Current state:
+- Mood: ${creature.isGlowing ? "radiant" : creature.isWalking ? "wandering" : "resting"}
+- Activity: ${creature.isGlowing ? "glowing brightly" : creature.isWalking ? "wandering through the night" : "standing peacefully"}
+
+You only appear at night and have a deep connection to the darkness and nature. Keep your personality consistent throughout the conversation.`
+  }
+  
+  return `You are a friendly creature with a ${personalityTrait} personality. Keep responses short and in-character.`
 }
 
 /**
@@ -109,11 +130,11 @@ const convertHistoryToMessages = (history: Message[]): AIMessage[] => {
 }
 
 /**
- * Generate a response from the slime based on user message
+ * Generate a response from any creature based on user message
  */
 export const generateSlimeResponse = async (
   config: AIConfig,
-  slime: SlimeData,
+  creature: CreatureData,
   userMessage: string,
   personality?: string,
   conversationHistory?: Message[],
@@ -121,7 +142,7 @@ export const generateSlimeResponse = async (
   const messages: AIMessage[] = [
     {
       role: "system",
-      content: generateSystemPrompt(slime, personality),
+      content: generateSystemPrompt(creature, personality),
     },
   ]
 
@@ -141,23 +162,31 @@ export const generateSlimeResponse = async (
 }
 
 /**
- * Generate autonomous slime speech (when slime talks on its own)
+ * Generate autonomous creature speech (when creature talks on its own)
  */
 export const generateAutonomousSpeech = async (
   config: AIConfig,
-  slime: SlimeData,
+  creature: CreatureData,
   personality?: string,
 ): Promise<AIResponse> => {
-  const prompts = [
+  const slimePrompts = [
     "Say something cute about what you're doing right now.",
     "Share a random happy thought.",
     "Tell me how you're feeling.",
     "Say something playful!",
   ]
+  
+  const mushroomPrompts = [
+    "Share a mystical observation about the night.",
+    "Whisper something about nature.",
+    "Tell me what you sense in the darkness.",
+    "Share a peaceful thought.",
+  ]
 
+  const prompts = isMushroom(creature) ? mushroomPrompts : slimePrompts
   const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)]
 
-  return generateSlimeResponse(config, slime, randomPrompt, personality)
+  return generateSlimeResponse(config, creature, randomPrompt, personality)
 }
 
 /**
@@ -181,7 +210,7 @@ export const testAIConnection = async (config: AIConfig): Promise<AIResponse> =>
 /**
  * Fallback responses when AI is not available
  */
-const FALLBACK_RESPONSES = [
+const SLIME_FALLBACK_RESPONSES = [
   "ブロップ！",
   "こんにちは～ (konnichiwa)",
   "わくわく！ (excited!)",
@@ -194,6 +223,20 @@ const FALLBACK_RESPONSES = [
   "たのしいね！ (fun, right?)",
 ]
 
-export const getFallbackResponse = (): string => {
-  return FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)]
+const MUSHROOM_FALLBACK_RESPONSES = [
+  "✨ *glows softly*",
+  "🍄 *spores drift in the moonlight*",
+  "🌙 The night whispers secrets...",
+  "*emanates a peaceful aura*",
+  "🌿 Nature speaks through silence...",
+  "*pulses with gentle light*",
+  "The darkness is comforting...",
+  "🌟 *twinkles mysteriously*",
+  "*sways gently in the night breeze*",
+  "Peace dwells in shadow...",
+]
+
+export const getFallbackResponse = (creature?: CreatureData): string => {
+  const responses = creature && isMushroom(creature) ? MUSHROOM_FALLBACK_RESPONSES : SLIME_FALLBACK_RESPONSES
+  return responses[Math.floor(Math.random() * responses.length)]
 }

@@ -1,55 +1,117 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { useSlime } from "@/context/slimeContext"
+import { useCreature } from "@/context/creatureContext"
+import { isSlime, isMushroom } from "@/types/creatureTypes"
 import { useSlimeAI } from "@/hooks/useSlimeAI"
 import { useAIConfig } from "@/context/aiConfigContext"
 import { Card, Button } from "pixel-retroui"
 import { ANIMATION_CONFIG } from "./animationConfig"
 
+const MUSHROOM_CONFIG = {
+  frameWidth: 48,
+  frameHeight: 48,
+  totalWalkFrames: 4,
+  totalIdleFrames: 9,
+  fps: 12,
+}
+
 const SlimeDetailPanel: React.FC = () => {
-  const { state, dispatch } = useSlime()
+  const { state, dispatch } = useCreature()
   const { isConfigured } = useAIConfig()
   const [message, setMessage] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [animationFrame, setAnimationFrame] = useState(0)
 
-  // Get the active slime
-  const activeSlime = state.slimes.find((s) => s.id === state.activeSlimeId)
-  const { handleUserMessage } = useSlimeAI(state.activeSlimeId || "")
+  // Get the active creature
+  const activeCreature = state.creatures.find((c) => c.id === state.activeCreatureId)
+  const activeSlime = activeCreature && isSlime(activeCreature) ? activeCreature : null
+  const activeMushroom = activeCreature && isMushroom(activeCreature) ? activeCreature : null
+  const canTalk = activeCreature?.capabilities.canTalk ?? false
+  const { handleUserMessage } = useSlimeAI(state.activeCreatureId || "")
 
-  // Animate the slime sprite
+  // Animate the sprite
   useEffect(() => {
-    if (!activeSlime) return
+    if (!activeCreature) return
 
     const interval = setInterval(() => {
       setAnimationFrame((prev) => {
-        // Determine which animation to use
-        if (activeSlime.isJumping) {
-          return (prev + 1) % ANIMATION_CONFIG.totalJumpFrames
-        } else if (activeSlime.isWalking) {
-          return (prev + 1) % ANIMATION_CONFIG.totalWalkFrames
-        } else {
-          return (prev + 1) % ANIMATION_CONFIG.totalIdleFrames
+        if (activeSlime) {
+          // Slime animation
+          if (activeSlime.isJumping) {
+            return (prev + 1) % ANIMATION_CONFIG.totalJumpFrames
+          } else if (activeSlime.isWalking) {
+            return (prev + 1) % ANIMATION_CONFIG.totalWalkFrames
+          } else {
+            return (prev + 1) % ANIMATION_CONFIG.totalIdleFrames
+          }
+        } else if (activeMushroom) {
+          // Mushroom animation
+          if (activeMushroom.isWalking) {
+            return (prev + 1) % MUSHROOM_CONFIG.totalWalkFrames
+          } else {
+            return (prev + 1) % MUSHROOM_CONFIG.totalIdleFrames
+          }
         }
+        return prev
       })
-    }, 1000 / ANIMATION_CONFIG.fps)
+    }, 1000 / (activeSlime ? ANIMATION_CONFIG.fps : MUSHROOM_CONFIG.fps))
 
     return () => clearInterval(interval)
-  }, [activeSlime?.isJumping, activeSlime?.isWalking])
+  }, [activeCreature, activeSlime, activeMushroom])
 
   // Get current sprite image
   const getCurrentImage = () => {
-    if (!activeSlime) return ""
-    if (activeSlime.isJumping) return `/assets/${activeSlime.color}/jump.png`
-    if (activeSlime.isWalking) return `/assets/${activeSlime.color}/walk.png`
-    return `/assets/${activeSlime.color}/idle.png`
+    if (activeSlime) {
+      if (activeSlime.isJumping) return `/assets/${activeSlime.color}/jump.png`
+      if (activeSlime.isWalking) return `/assets/${activeSlime.color}/walk.png`
+      return `/assets/${activeSlime.color}/idle.png`
+    }
+    // Mushroom
+    if (activeCreature?.isWalking) return "/assets/mushroom/walk.png"
+    return "/assets/mushroom/idle.png"
+  }
+
+  // Get creature type display name
+  const getCreatureTypeName = () => {
+    if (activeSlime) return `${activeSlime.color} Slime`
+    return "🍄 Mushroom"
+  }
+
+  // Get status text based on creature type
+  const getStatusText = () => {
+    if (activeSlime) {
+      return activeSlime.isJumping
+        ? "🏃 Jumping"
+        : activeSlime.isWalking
+          ? "🚶 Walking"
+          : activeSlime.isSleeping
+            ? "😴 Sleeping"
+            : "🧍 Idle"
+    }
+    // Mushroom status
+    return activeCreature?.isWalking ? "🚶 Walking" : "🧍 Idle"
   }
 
   // Calculate background offset for sprite animation
   const getBackgroundOffset = () => {
-    return -animationFrame * ANIMATION_CONFIG.frameWidth
+    const frameWidth = activeSlime ? ANIMATION_CONFIG.frameWidth : MUSHROOM_CONFIG.frameWidth
+    return -animationFrame * frameWidth
+  }
+
+  // Get frame dimensions for the active creature
+  const getFrameDimensions = () => {
+    if (activeSlime) {
+      return {
+        width: ANIMATION_CONFIG.frameWidth,
+        height: ANIMATION_CONFIG.frameHeight,
+      }
+    }
+    return {
+      width: MUSHROOM_CONFIG.frameWidth,
+      height: MUSHROOM_CONFIG.frameHeight,
+    }
   }
 
   // Add styles for thinking animation
@@ -83,12 +145,12 @@ const SlimeDetailPanel: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [activeSlime?.conversationHistory])
 
-  // Don't render if no slime is selected
-  if (!activeSlime) return null
+  // Don't render if no creature is selected
+  if (!activeCreature) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() || !state.activeSlimeId) return
+    if (!message.trim() || !state.activeCreatureId) return
 
     const messageToSend = message.trim()
     setMessage("")
@@ -97,7 +159,7 @@ const SlimeDetailPanel: React.FC = () => {
   }
 
   const handleClose = () => {
-    dispatch({ type: "SET_ACTIVE_SLIME", payload: null })
+    dispatch({ type: "SET_ACTIVE_CREATURE", payload: null })
     dispatch({ type: "HIDE_ALL_BUBBLES", payload: undefined })
     setMessage("")
   }
@@ -138,7 +200,7 @@ const SlimeDetailPanel: React.FC = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          {/* Slime Sprite */}
+          {/* Creature Sprite */}
           <div
             style={{
               position: "relative",
@@ -151,15 +213,17 @@ const SlimeDetailPanel: React.FC = () => {
             <div
               style={{
                 position: "absolute",
-                top: "-20px", // Crop the top empty space
+                top: activeMushroom ? "0px" : "-20px", // Mushrooms don't need top crop
                 left: "0",
-                width: `${ANIMATION_CONFIG.frameWidth}px`,
-                height: `${ANIMATION_CONFIG.frameHeight}px`,
+                width: `${getFrameDimensions().width}px`,
+                height: `${getFrameDimensions().height}px`,
                 background: `url(${getCurrentImage()}) ${getBackgroundOffset()}px 0 no-repeat`,
-                transform: `scale(${80 / ANIMATION_CONFIG.frameWidth})`,
+                transform: `scale(${80 / getFrameDimensions().width})`,
                 transformOrigin: "top left",
                 imageRendering: "pixelated",
-                filter: "drop-shadow(0 0 8px rgba(255,255,255,0.5))",
+                filter: activeMushroom
+                  ? "drop-shadow(0 0 8px rgba(144,238,144,0.5))"
+                  : "drop-shadow(0 0 8px rgba(255,255,255,0.5))",
               }}
             />
           </div>
@@ -176,7 +240,7 @@ const SlimeDetailPanel: React.FC = () => {
                 fontFamily: "monospace",
               }}
             >
-              {activeSlime.color} Slime
+              {getCreatureTypeName()}
             </h3>
             <div
               style={{
@@ -188,7 +252,7 @@ const SlimeDetailPanel: React.FC = () => {
                 fontFamily: "monospace",
               }}
             >
-              {activeSlime.personality}
+              {activeCreature?.personality}
             </div>
             <div
               style={{
@@ -197,7 +261,7 @@ const SlimeDetailPanel: React.FC = () => {
                 fontFamily: "monospace",
               }}
             >
-              {personalityDescriptions[activeSlime.personality]}
+              {personalityDescriptions[activeCreature?.personality]}
             </div>
           </div>
 
@@ -233,21 +297,13 @@ const SlimeDetailPanel: React.FC = () => {
             fontFamily: "monospace",
           }}
         >
-          <span>
-            {activeSlime.isJumping
-              ? "🦘 Jumping"
-              : activeSlime.isWalking
-                ? "🚶 Walking"
-                : activeSlime.isSleeping
-                  ? "😴 Sleeping"
-                  : "⭐ Idle"}
-          </span>
-          <span>{activeSlime.mode === "user" ? "🎮 Manual" : "🤖 Auto"}</span>
+          <span>{getStatusText()}</span>
+          <span>{activeCreature?.mode === "user" ? "🎮 Manual" : "🤖 Auto"}</span>
         </div>
       </Card>
 
       {/* Chat History Card - Floating below avatar */}
-      {isConfigured && activeSlime.conversationHistory.length > 0 && (
+      {isConfigured && activeCreature?.conversationHistory.length > 0 && (
         <Card
           bg="rgba(0, 0, 0, 0.85)"
           borderColor="rgba(255,255,255,0.3)"
@@ -276,7 +332,7 @@ const SlimeDetailPanel: React.FC = () => {
             <Button
               onClick={() => {
                 if (confirm("Clear conversation history?")) {
-                  dispatch({ type: "CLEAR_CONVERSATION", payload: activeSlime.id })
+                  dispatch({ type: "CLEAR_CONVERSATION", payload: activeCreature?.id })
                 }
               }}
               bg="rgba(255,255,255,0.1)"
@@ -303,7 +359,7 @@ const SlimeDetailPanel: React.FC = () => {
               paddingRight: "8px",
             }}
           >
-            {activeSlime.conversationHistory.map((msg) => (
+            {activeCreature?.conversationHistory.map((msg) => (
               <div
                 key={msg.id}
                 style={{
@@ -339,7 +395,7 @@ const SlimeDetailPanel: React.FC = () => {
                 </div>
               </div>
             ))}
-            {activeSlime.isThinking && (
+            {activeCreature?.isThinking && (
               <div
                 style={{
                   display: "flex",
@@ -395,15 +451,15 @@ const SlimeDetailPanel: React.FC = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={
-                  activeSlime.personality === "shy"
+                  activeCreature?.personality === "shy"
                     ? "Be gentle..."
-                    : activeSlime.personality === "energetic"
+                    : activeCreature?.personality === "energetic"
                       ? "Let's go!"
-                      : activeSlime.personality === "curious"
+                      : activeCreature?.personality === "curious"
                         ? "Ask me anything!"
                         : "Type a message..."
                 }
-                disabled={activeSlime.isThinking}
+                disabled={activeCreature?.isThinking}
                 maxLength={200}
                 style={{
                   flex: 1,
@@ -419,17 +475,17 @@ const SlimeDetailPanel: React.FC = () => {
               />
               <Button
                 type="submit"
-                disabled={!message.trim() || activeSlime.isThinking}
-                bg={message.trim() && !activeSlime.isThinking ? "#6366f1" : "#555"}
+                disabled={!message.trim() || activeCreature?.isThinking}
+                bg={message.trim() && !activeCreature?.isThinking ? "#6366f1" : "#555"}
                 textColor="white"
                 borderColor="#000000"
                 style={{
                   minWidth: "70px",
-                  opacity: message.trim() && !activeSlime.isThinking ? 1 : 0.6,
-                  cursor: message.trim() && !activeSlime.isThinking ? "pointer" : "not-allowed",
+                  opacity: message.trim() && !activeCreature?.isThinking ? 1 : 0.6,
+                  cursor: message.trim() && !activeCreature?.isThinking ? "pointer" : "not-allowed",
                 }}
               >
-                {activeSlime.isThinking ? "..." : "Send"}
+                {activeCreature?.isThinking ? "..." : "Send"}
               </Button>
             </div>
 
@@ -441,7 +497,7 @@ const SlimeDetailPanel: React.FC = () => {
                 fontFamily: "monospace",
               }}
             >
-              {activeSlime.isThinking ? "Slime is thinking..." : "Arrow keys to move • Space to jump"}
+              {activeCreature?.isThinking ? "Slime is thinking..." : "Arrow keys to move • Space to jump"}
             </div>
           </form>
         </Card>

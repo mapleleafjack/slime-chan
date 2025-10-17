@@ -3,13 +3,15 @@
 import type React from "react"
 
 import { useEffect, useRef } from "react"
-import { useSlime } from "@/context/slimeContext"
+import { useCreature, createInitialSlime, createInitialMushroom } from "@/context/creatureContext"
+import { isSlime, isMushroom } from "@/types/creatureTypes"
 import Slime from "./Slime"
+import Mushroom from "./Mushroom"
 import SlimeLogicWrapper from "./SlimeLogicWrapper"
 import { randomInt } from "@/utils/slimeUtils"
 
 const SlimeManager = () => {
-  const { state, dispatch } = useSlime()
+  const { state, dispatch } = useCreature()
   const addButtonClickedRef = useRef(false)
   const addButtonTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -37,20 +39,38 @@ const SlimeManager = () => {
     const colors = ["blue", "red", "green"] as const
     const color = isInitial ? "blue" : colors[randomInt(0, colors.length - 1)]
 
+    const slimeData = createInitialSlime(id, color, position)
+
     dispatch({
-      type: "ADD_SLIME",
-      payload: {
-        id,
-        color,
-        position,
-      },
+      type: "ADD_CREATURE",
+      payload: slimeData,
+    })
+  }
+
+  // Add a mushroom
+  const addMushroom = () => {
+    const id = `mushroom-${Date.now()}`
+    const position = randomInt(50, Math.min(480 - 200, 380))
+
+    const mushroomData = createInitialMushroom(id, position)
+
+    dispatch({
+      type: "ADD_CREATURE",
+      payload: mushroomData,
     })
   }
 
   // Add initial slime if none exist
   useEffect(() => {
-    if (state.slimes.length === 0) {
+    const slimeCount = state.creatures.filter((c) => isSlime(c)).length
+    if (slimeCount === 0) {
       addSlime(true) // Pass true to indicate this is the initial slime
+    }
+
+    // Add a mushroom if none exist
+    const mushroomCount = state.creatures.filter((c) => isMushroom(c)).length
+    if (mushroomCount === 0) {
+      addMushroom()
     }
 
     // Clean up timeout on unmount
@@ -59,7 +79,7 @@ const SlimeManager = () => {
         clearTimeout(addButtonTimeoutRef.current)
       }
     }
-  }, [state.slimes.length])
+  }, [state.creatures.length])
 
   const handleAddButtonClick = (e: React.MouseEvent) => {
     // Prevent event bubbling
@@ -72,13 +92,18 @@ const SlimeManager = () => {
   return (
     <>
       {/* Render SlimeLogicWrapper components for each slime */}
-      {state.slimes.map((slime) => (
+      {state.creatures.filter((c) => isSlime(c)).map((slime) => (
         <SlimeLogicWrapper key={`logic-${slime.id}`} id={slime.id} />
       ))}
 
       {/* Render Slime components for each slime */}
-      {state.slimes.map((slime) => (
+      {state.creatures.filter((c) => isSlime(c)).map((slime) => (
         <Slime key={slime.id} id={slime.id} />
+      ))}
+
+      {/* Render Mushroom components for each mushroom */}
+      {state.creatures.filter((c) => isMushroom(c)).map((mushroom) => (
+        <Mushroom key={mushroom.id} id={mushroom.id} />
       ))}
 
       <button className="add-slime-button" onClick={handleAddButtonClick} title="Add Slime" type="button">

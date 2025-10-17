@@ -1,17 +1,21 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { useSlime } from "@/context/slimeContext"
+import { useCreature } from "@/context/creatureContext"
+import { isSlime } from "@/types/creatureTypes"
 import { useSlimeAI } from "@/hooks/useSlimeAI"
 import { Button, Card } from "pixel-retroui"
 
 const ChatInput: React.FC = () => {
-  const { state, dispatch } = useSlime()
+  const { state, dispatch } = useCreature()
   const [message, setMessage] = useState("")
   const [chatActive, setChatActive] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
-  const activeSlime = state.slimes.find((s) => s.id === state.activeSlimeId)
-  const { handleUserMessage } = useSlimeAI(state.activeSlimeId || "")
+  const activeCreature = state.creatures.find((c) => c.id === state.activeCreatureId)
+  // Only slimes can talk - check capabilities
+  const canTalk = activeCreature?.capabilities.canTalk ?? false
+  const activeSlime = activeCreature && isSlime(activeCreature) ? activeCreature : null
+  const { handleUserMessage } = useSlimeAI(state.activeCreatureId || "")
 
   // Broadcast chat active state whenever it changes
   useEffect(() => {
@@ -36,12 +40,12 @@ const ChatInput: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [activeSlime])
 
-  // Only show when a slime is selected
-  if (!activeSlime) return null
+  // Only show when a creature that can talk is selected
+  if (!activeCreature || !canTalk) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() || !state.activeSlimeId) return
+    if (!message.trim() || !state.activeCreatureId) return
 
     const messageToSend = message.trim()
     setMessage("")
@@ -51,8 +55,8 @@ const ChatInput: React.FC = () => {
   }
 
   const handleClose = () => {
-    if (!state.activeSlimeId) return
-    dispatch({ type: "SET_ACTIVE_SLIME", payload: null })
+    if (!state.activeCreatureId) return
+    dispatch({ type: "SET_ACTIVE_CREATURE", payload: null })
     dispatch({ type: "HIDE_ALL_BUBBLES", payload: undefined })
     setMessage("")
     setChatActive(false)
@@ -67,7 +71,17 @@ const ChatInput: React.FC = () => {
       curious: "Ask me anything!",
       sleepy: "Wake me up softly...",
     }
-    return personalities[activeSlime.personality] || "Talk to your slime..."
+    return personalities[activeCreature?.personality ?? ""] || "Talk to your slime..."
+  }
+
+  const getCreatureIcon = (): string => {
+    if (!activeSlime) return "🍄"
+    return activeSlime.color === "blue" ? "🔵" : activeSlime.color === "red" ? "🔴" : "🟢"
+  }
+
+  const getCreatureColor = (): string => {
+    if (!activeSlime) return "#90EE90"
+    return activeSlime.color === "blue" ? "#5499C7" : activeSlime.color === "red" ? "#E74C3C" : "#52C41A"
   }
 
   return (
@@ -106,8 +120,7 @@ const ChatInput: React.FC = () => {
                 justifyContent: "center",
                 minWidth: "48px",
                 height: "48px",
-                backgroundColor:
-                  activeSlime.color === "blue" ? "#5499C7" : activeSlime.color === "red" ? "#E74C3C" : "#52C41A",
+                backgroundColor: getCreatureColor(),
                 fontSize: "24px",
                 fontWeight: "bold",
                 color: "white",
@@ -115,7 +128,7 @@ const ChatInput: React.FC = () => {
                 imageRendering: "pixelated",
               }}
             >
-              {activeSlime.color === "blue" ? "🔵" : activeSlime.color === "red" ? "🔴" : "🟢"}
+              {getCreatureIcon()}
             </div>
 
             {/* Input field */}
@@ -125,7 +138,7 @@ const ChatInput: React.FC = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={getPlaceholder()}
-                disabled={activeSlime.isThinking}
+                disabled={activeCreature?.isThinking}
                 maxLength={200}
                 onFocus={() => setChatActive(true)}
                 onBlur={() => setChatActive(false)}
@@ -147,17 +160,17 @@ const ChatInput: React.FC = () => {
             {/* Send button */}
             <Button
               type="submit"
-              disabled={!message.trim() || activeSlime.isThinking}
-              bg={message.trim() && !activeSlime.isThinking ? "#6366f1" : "#555"}
+              disabled={!message.trim() || activeCreature?.isThinking}
+              bg={message.trim() && !activeCreature?.isThinking ? "#6366f1" : "#555"}
               textColor="white"
               borderColor="#000000"
               style={{
                 minWidth: "80px",
-                opacity: message.trim() && !activeSlime.isThinking ? 1 : 0.6,
-                cursor: message.trim() && !activeSlime.isThinking ? "pointer" : "not-allowed",
+                opacity: message.trim() && !activeCreature?.isThinking ? 1 : 0.6,
+                cursor: message.trim() && !activeCreature?.isThinking ? "pointer" : "not-allowed",
               }}
             >
-              {activeSlime.isThinking ? "..." : "Send"}
+              {activeCreature?.isThinking ? "..." : "Send"}
             </Button>
 
             {/* Close button */}
@@ -189,7 +202,7 @@ const ChatInput: React.FC = () => {
             }}
           >
             {chatActive
-              ? `Typing to ${activeSlime.color} slime (${activeSlime.personality}) • Controls disabled • Enter to send`
+              ? `Typing to ${getCreatureIcon()} ${activeSlime ? 'slime' : 'mushroom'} (${activeCreature?.personality}) • Controls disabled • Enter to send`
               : `Click input to type • Arrow keys/Space control slime • ESC or ✕ to close`}
           </div>
         </form>

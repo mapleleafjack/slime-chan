@@ -3,7 +3,8 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import SlimeSprite from "./SlimeSprite"
-import { useSlime } from "@/context/slimeContext"
+import { useCreature } from "@/context/creatureContext"
+import { isSlime } from "@/types/creatureTypes"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { ANIMATION_CONFIG } from "./animationConfig"
 import { DayPhase } from "@/utils/slimeUtils"
@@ -15,14 +16,16 @@ interface SlimeProps {
 }
 
 const Slime: React.FC<SlimeProps> = ({ id }) => {
-  const { state, dispatch } = useSlime()
+  const { state, dispatch } = useCreature()
   const { currentPhase } = useDayCycle()
   const [isHovered, setIsHovered] = useState(false)
   const slimeRef = useRef<HTMLDivElement>(null)
 
   // Find the slime data
-  const slime = state.slimes.find((s) => s.id === id)
-  if (!slime) return null
+  const creature = state.creatures.find((c) => c.id === id)
+  if (!creature || !isSlime(creature)) return null
+  
+  const slime = creature
 
   // Preload all slime images on component mount
   useEffect(() => {
@@ -56,7 +59,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     dispatch({ type: "HIDE_ALL_BUBBLES", payload: undefined })
 
     // Set this slime as active
-    dispatch({ type: "SET_ACTIVE_SLIME", payload: id })
+    dispatch({ type: "SET_ACTIVE_CREATURE", payload: id })
     dispatch({ type: "SET_LAST_INTERACTION", payload: { id, value: Date.now() } })
 
     // Immediately stop the slime when selected
@@ -82,8 +85,9 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation()
     // Don't remove the last slime
-    if (state.slimes.length > 1) {
-      dispatch({ type: "REMOVE_SLIME", payload: id })
+    const slimeCount = state.creatures.filter((c) => isSlime(c)).length
+    if (slimeCount > 1) {
+      dispatch({ type: "REMOVE_CREATURE", payload: id })
     }
   }
 
@@ -120,7 +124,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
                        activeElement?.getAttribute('contenteditable') === 'true'
       
       // Only handle keyboard controls for the selected slime and when chat is not active
-      if (state.activeSlimeId !== id || chatActive || isTyping) return
+      if (state.activeCreatureId !== id || chatActive || isTyping) return
 
       dispatch({ type: "SET_LAST_INTERACTION", payload: { id, value: Date.now() } })
       dispatch({ type: "SET_MODE", payload: { id, value: "user" } })
@@ -155,14 +159,14 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
                        activeElement?.getAttribute('contenteditable') === 'true'
       
       // Only handle keyboard controls for the selected slime and when chat is not active
-      if (state.activeSlimeId !== id || chatActive || isTyping) return
+      if (state.activeCreatureId !== id || chatActive || isTyping) return
 
       if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
         e.preventDefault()
         dispatch({ type: "SET_WALKING", payload: { id, value: false } })
       }
     }
-  }, [dispatch, id, slime.isJumping, state.activeSlimeId, chatActive])
+  }, [dispatch, id, slime.isJumping, state.activeCreatureId, chatActive])
 
   useEffect(() => {
     handleKeyDownRefCallback.current = (e: KeyboardEvent) => {
@@ -255,7 +259,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   }
 
   const bubblePosition = getBubblePosition()
-  const isActive = state.activeSlimeId === id
+  const isActive = state.activeCreatureId === id
 
   // Add aura effect for active slime
   const renderAura = () => {
@@ -322,7 +326,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
                 <button className="slime-menu-btn color" onClick={handleColorMenu} title="Change Color">
                   🎨
                 </button>
-                {state.slimes.length > 1 && (
+                {state.creatures.filter((c) => isSlime(c)).length > 1 && (
                   <button className="slime-menu-btn remove" onClick={handleRemove} title="Remove">
                     ❌
                   </button>

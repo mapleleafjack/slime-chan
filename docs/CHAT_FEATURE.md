@@ -96,8 +96,9 @@ Added console logging to make it obvious when AI is being used:
 1. **SlimeGame.tsx** - Added ChatInput component
 2. **Slime.tsx** - Improved click behavior (no auto random phrase)
 3. **useSlimeAI.ts** - Added logging for transparency
-4. **QUICK_START.md** - Updated with chat instructions
-5. **README.md** - Added chat feature to main docs
+4. **creatureContext.tsx** - Generic creature system with personality support
+5. **QUICK_START.md** - Updated with chat instructions
+6. **README.md** - Added chat feature to main docs
 
 ### Files Created
 1. **ChatInput.tsx** - Main chat interface component
