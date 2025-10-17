@@ -1,29 +1,60 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useRef } from "react"
 import { useCreature } from "@/context/creatureContext"
 import { isMushroom, type MushroomData, type CreatureData } from "@/types/creatureTypes"
 import { DayPhase } from "@/utils/gameUtils"
-import { useBaseCreature, RenderCreature, type MenuHandlers } from "./BaseCreature"
-import { MUSHROOM_CREATURE_CONFIG } from "../creatureConfig"
-import { GenericCreatureMenu, type CreatureMenuConfig } from "../menuConfig"
+import BaseCreature, { type MenuHandlers, type CreatureMenuConfig } from "./BaseCreature"
+import type { CreatureDefinition } from "./types"
 
-const MUSHROOM_GLOW_DURATION = 1000
-
-interface MushroomProps {
-  id: string
+export const MUSHROOM_DEFINITION: CreatureDefinition = {
+  type: "mushroom",
+  displayName: "Mushroom",
+  sprites: {
+    default: {
+      frameWidth: 48,
+      frameHeight: 48,
+      animations: {
+        idle: { path: "/assets/mushroom/idle.png", frameCount: 9 },
+        walk: { path: "/assets/mushroom/walk.png", frameCount: 4 },
+      },
+    },
+  },
+  physics: { 
+    speed: 0.5, 
+    groundLevel: 490, 
+    fps: 12,
+    baseSpeed: 0.5,
+    minSpeed: 0.3,
+    maxSpeed: 0.8,
+  },
+  ui: { bubbleOffset: 80, indicatorOffset: 30 },
+  capabilities: {
+    canJump: false,
+    canGlow: true,
+    canSleep: false,
+    canTalk: true,
+    canChangeColor: false,
+  },
+  defaultGreeting: "✨ *glows softly*",
+  auraColor: "150,255,150",
 }
 
-/**
- * Create menu configuration for a mushroom instance
- */
-const createMushroomMenuConfig = (
+const getMushroomImage = (creature: MushroomData) => {
+  const sprite = MUSHROOM_DEFINITION.sprites.default
+  return creature.isWalking ? sprite.animations.walk!.path : sprite.animations.idle!.path
+}
+
+const getMushroomFrame = (creature: MushroomData) => {
+  return creature.isWalking ? creature.walkFrame : creature.idleFrame
+}
+
+const getMushroomMenuConfig = (
   id: string,
   creature: MushroomData,
-  dispatch: any,
+  allCreatures: CreatureData[],
   handlers: MenuHandlers,
-  allCreatures: CreatureData[]
+  dispatch: any
 ): CreatureMenuConfig => {
   const sameTypeCount = allCreatures.filter((c) => c.creatureType === "mushroom").length
 
@@ -38,17 +69,11 @@ const createMushroomMenuConfig = (
           const newGlowState = !creature.isGlowing
           dispatch({ type: "SET_GLOWING", payload: { id, value: newGlowState } })
           dispatch({ type: "SET_GLOW_INTENSITY", payload: { id, value: newGlowState ? 1 : 0 } })
-          
-          // Show feedback bubble
           dispatch({ 
             type: "SHOW_BUBBLE", 
             payload: { id, text: newGlowState ? "✨ *glowing*" : "*glow fades*" } 
           })
-          
-          // Hide bubble after 2 seconds
-          setTimeout(() => {
-            dispatch({ type: "HIDE_BUBBLE", payload: id })
-          }, 2000)
+          setTimeout(() => dispatch({ type: "HIDE_BUBBLE", payload: id }), 2000)
         },
         isVisible: creature.capabilities.canGlow,
       },
@@ -56,184 +81,55 @@ const createMushroomMenuConfig = (
         id: "remove",
         icon: "❌",
         title: "Remove",
-        onClick: (e) => {
-          handlers.handleRemove(e)
-        },
+        onClick: (e) => handlers.handleRemove(e),
         isVisible: sameTypeCount > 1,
       },
     ],
-    subMenus: {},
   }
 }
 
+interface MushroomProps {
+  id: string
+}
+
 const Mushroom: React.FC<MushroomProps> = ({ id }) => {
-  const { dispatch } = useCreature()
+  const { dispatch, state } = useCreature()
   const glowTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const creature = state.creatures.find((c) => c.id === id)
 
-  // Preload images to prevent flickering
-  useEffect(() => {
-    const walkImage = new Image()
-    walkImage.src = "/assets/mushroom/walk.png"
-
-    const idleImage = new Image()
-    idleImage.src = "/assets/mushroom/idle.png"
-  }, [])
-
-  // Mushrooms are only visible during dusk and night
-  const isVisibleFunc = (currentPhase: DayPhase) =>
-    currentPhase === DayPhase.NIGHT || currentPhase === DayPhase.DUSK
-
-  const baseCreature = useBaseCreature({
-    id,
-    config: MUSHROOM_CREATURE_CONFIG,
-    isVisible: isVisibleFunc,
-    enableKeyboardControls: false,
-    stopOnClick: true,
-    getCurrentImage: (creature: CreatureData) => {
-      if (!isMushroom(creature)) return ""
-      return creature.isWalking ? "/assets/mushroom/walk.png" : "/assets/mushroom/idle.png"
-    },
-    getCurrentFrame: (creature: CreatureData) => {
-      if (!isMushroom(creature)) return 0
-      return creature.isWalking ? creature.walkFrame : creature.idleFrame
-    },
-    getTotalFrames: (creature: CreatureData) => {
-      if (!isMushroom(creature)) return MUSHROOM_CREATURE_CONFIG.totalIdleFrames
-      return creature.isWalking ? MUSHROOM_CREATURE_CONFIG.totalWalkFrames : MUSHROOM_CREATURE_CONFIG.totalIdleFrames
-    },
-    getGreetingText: () => "✨ *glows softly*",
-    getAuraColor: () => "150,255,150", // Green aura for mushrooms
-    onCreatureClick: (creature: CreatureData) => {
-      if (!isMushroom(creature)) return
-      
-      // Make it glow when selected
-      if (glowTimeoutRef.current) {
-        clearTimeout(glowTimeoutRef.current)
-      }
-      dispatch({ type: "SET_GLOWING", payload: { id, value: true } })
-      dispatch({ type: "SET_GLOW_INTENSITY", payload: { id, value: 1 } })
-    },
-    renderSprite: ({ creature: c, config, currentImage, backgroundOffsetX, isActive, isHovered, currentPhase }) => {
-      if (!isMushroom(c)) return null
-
-      const isDusk = currentPhase === DayPhase.DUSK
-      const baseGlowClass = isDusk ? "mushroom-sprite-dusk" : "mushroom-sprite-night"
-      const glowClass = c.isGlowing ? "mushroom-sprite-glowing" : baseGlowClass
-
-      return (
-        <div
-          style={{
-            position: "absolute",
-            top: `${config.groundLevel}px`,
-            left: `${c.position}px`,
-            width: `${config.frameWidth}px`,
-            height: `${config.frameHeight}px`,
-            background: `url(${currentImage}) ${backgroundOffsetX}px 0 no-repeat`,
-            transform: c.direction === -1 ? "scaleX(-1)" : "scaleX(1)",
-            transformOrigin: "center center",
-            filter: c.isGlowing
-              ? "drop-shadow(0 0 10px rgba(255,255,255,0.9)) brightness(1.3)"
-              : isDusk
-                ? "drop-shadow(0 0 3px rgba(255,200,150,0.3))"
-                : "drop-shadow(0 0 3px rgba(255,255,255,0.3))",
-            transition: c.isGlowing ? "filter 0.2s ease-in" : "filter 0.5s ease-out, transform 0.2s ease",
-            willChange: "background-position, transform, filter",
-            imageRendering: "pixelated",
-            zIndex: c.isGlowing ? 96 : 89,
-          }}
-          className={`mushroom-sprite background-character ${glowClass}`}
-        />
-      )
-    },
-    renderMenu: (creature: CreatureData, handlers: MenuHandlers) => {
-      if (!isMushroom(creature)) return null
-      const menuConfig = createMushroomMenuConfig(id, creature, baseCreature.dispatch, handlers, baseCreature.state.creatures)
-      return (
-        <GenericCreatureMenu
-          config={menuConfig}
-          currentMenuState={creature.bubble.menuState}
-          onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
-        />
-      )
-    },
-  })
-
-  const { creature } = baseCreature
-
-  // Clean up glow timeout on unmount
   useEffect(() => {
     return () => {
-      if (glowTimeoutRef.current) {
-        clearTimeout(glowTimeoutRef.current)
-      }
+      if (glowTimeoutRef.current) clearTimeout(glowTimeoutRef.current)
     }
   }, [])
 
   if (!creature || !isMushroom(creature)) return null
 
-  const getCurrentImage = (c: CreatureData) => {
-    if (!isMushroom(c)) return ""
-    return c.isWalking ? "/assets/mushroom/walk.png" : "/assets/mushroom/idle.png"
-  }
-
-  const getCurrentFrame = (c: CreatureData) => {
-    if (!isMushroom(c)) return 0
-    return c.isWalking ? c.walkFrame : c.idleFrame
-  }
-
-  const renderSprite = ({ creature: c, config, currentImage, backgroundOffsetX, isActive, isHovered, currentPhase }: any) => {
-    if (!isMushroom(c)) return null
-
-    const isDusk = currentPhase === DayPhase.DUSK
-    const baseGlowClass = isDusk ? "mushroom-sprite-dusk" : "mushroom-sprite-night"
-    const glowClass = c.isGlowing ? "mushroom-sprite-glowing" : baseGlowClass
-
-    return (
-      <div
-        style={{
-          position: "absolute",
-          top: `${config.groundLevel}px`,
-          left: `${c.position}px`,
-          width: `${config.frameWidth}px`,
-          height: `${config.frameHeight}px`,
-          background: `url(${currentImage}) ${backgroundOffsetX}px 0 no-repeat`,
-          transform: c.direction === -1 ? "scaleX(-1)" : "scaleX(1)",
-          transformOrigin: "center center",
-          filter: c.isGlowing
-            ? "drop-shadow(0 0 10px rgba(255,255,255,0.9)) brightness(1.3)"
-            : isDusk
-              ? "drop-shadow(0 0 3px rgba(255,200,150,0.3))"
-              : "drop-shadow(0 0 3px rgba(255,255,255,0.3))",
-          transition: c.isGlowing ? "filter 0.2s ease-in" : "filter 0.5s ease-out, transform 0.2s ease",
-          willChange: "background-position, transform, filter",
-          imageRendering: "pixelated",
-          zIndex: c.isGlowing ? 96 : 89,
-        }}
-        className={`mushroom-sprite background-character ${glowClass}`}
-      />
-    )
-  }
-
-  const renderMenu = (c: CreatureData, handlers: MenuHandlers) => {
-    if (!isMushroom(c)) return null
-    const menuConfig = createMushroomMenuConfig(id, c, baseCreature.dispatch, handlers, baseCreature.state.creatures)
-    return (
-      <GenericCreatureMenu
-        config={menuConfig}
-        currentMenuState={c.bubble.menuState}
-        onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
-      />
-    )
-  }
-
   return (
-    <RenderCreature
-      baseCreature={baseCreature}
-      renderSprite={renderSprite}
-      renderMenu={renderMenu}
-      config={MUSHROOM_CREATURE_CONFIG}
-      getCurrentImage={getCurrentImage}
-      getCurrentFrame={getCurrentFrame}
+    <BaseCreature
+      id={id}
+      definition={MUSHROOM_DEFINITION}
+      getCurrentImage={(c) => isMushroom(c) ? getMushroomImage(c) : ""}
+      getCurrentFrame={(c) => isMushroom(c) ? getMushroomFrame(c) : 0}
+      getMenuConfig={(c, all, handlers) => isMushroom(c) ? getMushroomMenuConfig(id, c, all, handlers, dispatch) : { mainActions: [] }}
+      isVisible={(currentPhase) => currentPhase === DayPhase.NIGHT || currentPhase === DayPhase.DUSK}
+      onCreatureClick={(c) => {
+        if (!isMushroom(c)) return
+        if (glowTimeoutRef.current) clearTimeout(glowTimeoutRef.current)
+        dispatch({ type: "SET_GLOWING", payload: { id, value: true } })
+        dispatch({ type: "SET_GLOW_INTENSITY", payload: { id, value: 1 } })
+      }}
+      getCustomSpriteProps={(c, currentPhase) => {
+        if (!isMushroom(c)) return {}
+        const isDusk = currentPhase === DayPhase.DUSK
+        const customFilter = c.isGlowing
+          ? "drop-shadow(0 0 10px rgba(255,255,255,0.9)) brightness(1.3)"
+          : isDusk
+            ? "drop-shadow(0 0 3px rgba(255,200,150,0.3))"
+            : "drop-shadow(0 0 3px rgba(255,255,255,0.3))"
+        const customClassName = c.isGlowing ? "mushroom-sprite-glowing" : ""
+        return { customFilter, customClassName }
+      }}
     />
   )
 }

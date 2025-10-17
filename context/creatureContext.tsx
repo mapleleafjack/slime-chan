@@ -1,6 +1,5 @@
 "use client"
 
-import { ANIMATION_CONFIG } from "@/components/CreatureGame/animationConfig"
 import type {
   CreatureData,
   SlimeData,
@@ -15,6 +14,7 @@ import type {
 } from "@/types/creatureTypes"
 import type React from "react"
 import { createContext, useContext, useReducer } from "react"
+import { getCreatureDefinition } from "@/components/CreatureGame/creatures"
 
 // Creature actions - generic actions that work for all creatures
 type CreatureAction =
@@ -249,11 +249,16 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
     case "INCREMENT_JUMP_FRAME":
       return {
         ...state,
-        creatures: state.creatures.map((creature) =>
-          creature.id === action.payload && creature.creatureType === "slime"
-            ? { ...creature, jumpFrame: (creature.jumpFrame + 1) % ANIMATION_CONFIG.totalJumpFrames }
-            : creature,
-        ),
+        creatures: state.creatures.map((creature) => {
+          if (creature.id !== action.payload || creature.creatureType !== "slime") return creature
+          
+          // Get frame count from creature definition
+          const definition = getCreatureDefinition(creature.creatureType)
+          const sprite = definition.sprites[creature.color]
+          const maxFrames = sprite.animations.jump?.frameCount || 1
+          
+          return { ...creature, jumpFrame: (creature.jumpFrame + 1) % maxFrames }
+        }),
       }
     case "INCREMENT_WALK_FRAME":
       return {
@@ -261,11 +266,10 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         creatures: state.creatures.map((creature) => {
           if (creature.id !== action.payload) return creature
           
-          // Determine max frames based on creature type
-          let maxFrames = ANIMATION_CONFIG.totalWalkFrames // Default for slimes
-          if (creature.creatureType === "mushroom") {
-            maxFrames = 4 // Mushroom walk frames
-          }
+          // Get max frames from creature definition
+          const definition = getCreatureDefinition(creature.creatureType)
+          const sprite = definition.sprites[creature.color]
+          const maxFrames = sprite.animations.walk?.frameCount || 1
           
           return {
             ...creature,
@@ -279,11 +283,10 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         creatures: state.creatures.map((creature) => {
           if (creature.id !== action.payload) return creature
           
-          // Determine max frames based on creature type
-          let maxFrames = ANIMATION_CONFIG.totalIdleFrames // Default for slimes
-          if (creature.creatureType === "mushroom") {
-            maxFrames = 9 // Mushroom idle frames
-          }
+          // Get max frames from creature definition
+          const definition = getCreatureDefinition(creature.creatureType)
+          const sprite = definition.sprites[creature.color]
+          const maxFrames = sprite.animations.idle?.frameCount || 1
           
           return {
             ...creature,

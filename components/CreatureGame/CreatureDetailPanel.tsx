@@ -6,15 +6,7 @@ import { isSlime, isMushroom } from "@/types/creatureTypes"
 import { useCreatureAI } from "@/hooks/useCreatureAI"
 import { useAIConfig } from "@/context/aiConfigContext"
 import { Card, Button } from "pixel-retroui"
-import { ANIMATION_CONFIG } from "./animationConfig"
-
-const MUSHROOM_CONFIG = {
-  frameWidth: 48,
-  frameHeight: 48,
-  totalWalkFrames: 4,
-  totalIdleFrames: 9,
-  fps: 12,
-}
+import { getCreatureDefinition } from "./creatures"
 
 const CreatureDetailPanel: React.FC = () => {
   const { state, dispatch } = useCreature()
@@ -35,28 +27,31 @@ const CreatureDetailPanel: React.FC = () => {
   useEffect(() => {
     if (!activeCreature) return
 
+    const definition = getCreatureDefinition(activeCreature.creatureType)
+    const sprite = definition.sprites[activeCreature.color]
+
     const interval = setInterval(() => {
       setAnimationFrame((prev) => {
         if (activeSlime) {
           // Slime animation
           if (activeSlime.isJumping) {
-            return (prev + 1) % ANIMATION_CONFIG.totalJumpFrames
+            return (prev + 1) % (sprite.animations.jump?.frameCount || 1)
           } else if (activeSlime.isWalking) {
-            return (prev + 1) % ANIMATION_CONFIG.totalWalkFrames
+            return (prev + 1) % (sprite.animations.walk?.frameCount || 1)
           } else {
-            return (prev + 1) % ANIMATION_CONFIG.totalIdleFrames
+            return (prev + 1) % (sprite.animations.idle?.frameCount || 1)
           }
         } else if (activeMushroom) {
           // Mushroom animation
           if (activeMushroom.isWalking) {
-            return (prev + 1) % MUSHROOM_CONFIG.totalWalkFrames
+            return (prev + 1) % (sprite.animations.walk?.frameCount || 1)
           } else {
-            return (prev + 1) % MUSHROOM_CONFIG.totalIdleFrames
+            return (prev + 1) % (sprite.animations.idle?.frameCount || 1)
           }
         }
         return prev
       })
-    }, 1000 / (activeSlime ? ANIMATION_CONFIG.fps : MUSHROOM_CONFIG.fps))
+    }, 1000 / definition.physics.fps)
 
     return () => clearInterval(interval)
   }, [activeCreature, activeSlime, activeMushroom])
@@ -96,21 +91,20 @@ const CreatureDetailPanel: React.FC = () => {
 
   // Calculate background offset for sprite animation
   const getBackgroundOffset = () => {
-    const frameWidth = activeSlime ? ANIMATION_CONFIG.frameWidth : MUSHROOM_CONFIG.frameWidth
-    return -animationFrame * frameWidth
+    if (!activeCreature) return 0
+    const definition = getCreatureDefinition(activeCreature.creatureType)
+    const sprite = definition.sprites[activeCreature.color]
+    return -animationFrame * sprite.frameWidth
   }
 
   // Get frame dimensions for the active creature
   const getFrameDimensions = () => {
-    if (activeSlime) {
-      return {
-        width: ANIMATION_CONFIG.frameWidth,
-        height: ANIMATION_CONFIG.frameHeight,
-      }
-    }
+    if (!activeCreature) return { width: 128, height: 128 }
+    const definition = getCreatureDefinition(activeCreature.creatureType)
+    const sprite = definition.sprites[activeCreature.color]
     return {
-      width: MUSHROOM_CONFIG.frameWidth,
-      height: MUSHROOM_CONFIG.frameHeight,
+      width: sprite.frameWidth,
+      height: sprite.frameHeight,
     }
   }
 

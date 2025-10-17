@@ -1,35 +1,98 @@
 "use client"
 
-import type React from "react"
-import { useEffect, useRef } from "react"
-import CreatureSprite from "../CreatureSprite"
+import { useEffect, useRef, useState } from "react"
 import { useCreature } from "@/context/creatureContext"
 import { isSlime, type SlimeData, type CreatureData, type SlimeColor } from "@/types/creatureTypes"
-import { ANIMATION_CONFIG } from "../animationConfig"
 import { getRandomPhrase } from "@/utils/gameUtils"
-import { useBaseCreature, RenderCreature, type MenuHandlers } from "./BaseCreature"
-import { SLIME_CREATURE_CONFIG } from "../creatureConfig"
-import { GenericCreatureMenu, type CreatureMenuConfig } from "../menuConfig"
+import BaseCreature, { type MenuHandlers, type CreatureMenuConfig } from "./BaseCreature"
+import type { CreatureDefinition } from "./types"
 
-interface SlimeProps {
-  id: string
+export const SLIME_DEFINITION: CreatureDefinition = {
+  type: "slime",
+  displayName: "Slime",
+  sprites: {
+    blue: {
+      frameWidth: 128,
+      frameHeight: 128,
+      animations: {
+        idle: { path: "/assets/blue/idle.png", frameCount: 8 },
+        walk: { path: "/assets/blue/walk.png", frameCount: 8 },
+        jump: { path: "/assets/blue/jump.png", frameCount: 13 },
+      },
+    },
+    red: {
+      frameWidth: 128,
+      frameHeight: 128,
+      animations: {
+        idle: { path: "/assets/red/idle.png", frameCount: 8 },
+        walk: { path: "/assets/red/walk.png", frameCount: 8 },
+        jump: { path: "/assets/red/jump.png", frameCount: 13 },
+      },
+    },
+    green: {
+      frameWidth: 128,
+      frameHeight: 128,
+      animations: {
+        idle: { path: "/assets/green/idle.png", frameCount: 8 },
+        walk: { path: "/assets/green/walk.png", frameCount: 8 },
+        jump: { path: "/assets/green/jump.png", frameCount: 13 },
+      },
+    },
+  },
+  physics: { 
+    speed: 2, 
+    groundLevel: 500, 
+    fps: 24,
+    baseSpeed: 2,
+    minSpeed: 1.5,
+    maxSpeed: 3.5,
+    jumpHeight: 50,
+    idleJumpProbability: 0.3,
+  },
+  ui: { bubbleOffset: 60, indicatorOffset: 0 },
+  capabilities: {
+    canJump: true,
+    canSleep: true,
+    canTalk: true,
+    canChangeColor: true,
+    canGlow: false,
+  },
+  defaultGreeting: "Bloop!",
+  auraColor: "255,255,255",
 }
 
-/**
- * Create menu configuration for a slime instance
- */
-const createSlimeMenuConfig = (
+const getSlimeImage = (creature: SlimeData) => {
+  const sprite = SLIME_DEFINITION.sprites[creature.color]
+  if (creature.isJumping) return sprite.animations.jump!.path
+  if (creature.isWalking) return sprite.animations.walk!.path
+  return sprite.animations.idle!.path
+}
+
+const getSlimeFrame = (creature: SlimeData) => {
+  if (creature.isJumping) return creature.jumpFrame
+  if (creature.isWalking) return creature.walkFrame
+  return creature.idleFrame
+}
+
+const getSlimeTopPosition = (creature: SlimeData) => {
+  if (!creature.isJumping) return SLIME_DEFINITION.physics.groundLevel
+  const jumpHeight = 50
+  const jumpFrameCount = SLIME_DEFINITION.sprites[creature.color].animations.jump!.frameCount
+  const t = creature.jumpFrame / (jumpFrameCount - 1)
+  return SLIME_DEFINITION.physics.groundLevel - jumpHeight * 4 * t * (1 - t)
+}
+
+const getSlimeMenuConfig = (
   id: string,
   creature: SlimeData,
-  dispatch: any,
+  allCreatures: CreatureData[],
   handlers: MenuHandlers,
-  allCreatures: CreatureData[]
+  dispatch: any
 ): CreatureMenuConfig => {
   const sameTypeCount = allCreatures.filter((c) => c.creatureType === "slime").length
 
   return {
     mainActions: [
-      // Color buttons - show all three colors directly
       {
         id: "color-blue",
         icon: "🔵",
@@ -64,102 +127,37 @@ const createSlimeMenuConfig = (
         id: "remove",
         icon: "❌",
         title: "Remove",
-        onClick: (e) => {
-          handlers.handleRemove(e)
-        },
+        onClick: (e) => handlers.handleRemove(e),
         isVisible: sameTypeCount > 1,
       },
     ],
-    subMenus: {},
   }
 }
 
+interface SlimeProps {
+  id: string
+}
+
 const Slime: React.FC<SlimeProps> = ({ id }) => {
-  const { dispatch } = useCreature()
+  const { dispatch, state } = useCreature()
+  const creature = state.creatures.find((c) => c.id === id)
+  const isActive = state.activeCreatureId === id
+  const [chatActive, setChatActive] = useState(false)
+  
+  const handleKeyDownRef = useRef<((e: KeyboardEvent) => void) | null>(null)
+  const handleKeyUpRef = useRef<((e: KeyboardEvent) => void) | null>(null)
 
-  // Preload all slime images on component mount
+  // Track chat active state for keyboard controls
   useEffect(() => {
-    const colors = ["blue", "red", "green"]
-    const animations = ["idle", "walk", "jump"]
-
-    colors.forEach((color) => {
-      animations.forEach((animation) => {
-        const img = new Image()
-        img.src = `/assets/${color}/${animation}.png`
-      })
-    })
+    const handleChatActive = (e: Event) => {
+      // @ts-ignore
+      setChatActive(e.detail?.active ?? false)
+    }
+    window.addEventListener("slime-chat-active", handleChatActive)
+    return () => window.removeEventListener("slime-chat-active", handleChatActive)
   }, [])
 
-  // Jump animation logic
-  const baseCreature = useBaseCreature({
-    id,
-    config: SLIME_CREATURE_CONFIG,
-    enableKeyboardControls: true,
-    stopOnClick: true,
-    getCurrentImage: (creature: CreatureData) => {
-      if (!isSlime(creature)) return ""
-      if (creature.isJumping) return `/assets/${creature.color}/jump.png`
-      if (creature.isWalking) return `/assets/${creature.color}/walk.png`
-      return `/assets/${creature.color}/idle.png`
-    },
-    getCurrentFrame: (creature: CreatureData) => {
-      if (!isSlime(creature)) return 0
-      if (creature.isJumping) return creature.jumpFrame
-      if (creature.isWalking) return creature.walkFrame
-      return creature.idleFrame
-    },
-    getTotalFrames: (creature: CreatureData) => {
-      if (!isSlime(creature)) return SLIME_CREATURE_CONFIG.totalIdleFrames
-      if (creature.isJumping) return ANIMATION_CONFIG.totalJumpFrames
-      if (creature.isWalking) return SLIME_CREATURE_CONFIG.totalWalkFrames
-      return SLIME_CREATURE_CONFIG.totalIdleFrames
-    },
-    calculateTopPosition: (creature: CreatureData) => {
-      if (!isSlime(creature) || !creature.isJumping) return SLIME_CREATURE_CONFIG.groundLevel
-      const t = creature.jumpFrame / (ANIMATION_CONFIG.totalJumpFrames - 1)
-      return SLIME_CREATURE_CONFIG.groundLevel - ANIMATION_CONFIG.jumpHeight * 4 * t * (1 - t)
-    },
-    getGreetingText: () => getRandomPhrase(),
-    onCreatureClick: (creature: CreatureData) => {
-      if (!isSlime(creature)) return
-      // Stop slime completely when clicked
-      dispatch({ type: "SET_JUMPING", payload: { id, value: false } })
-      dispatch({ type: "SET_SLEEPING", payload: { id, value: false } })
-    },
-    renderSprite: ({ creature, config, currentImage, backgroundOffsetX, topPosition, isActive, isHovered }) => {
-      if (!isSlime(creature)) return null
-      return (
-        <CreatureSprite
-          color={creature.color}
-          direction={creature.direction}
-          currentImage={currentImage}
-          backgroundOffsetX={backgroundOffsetX}
-          topPosition={topPosition}
-          x={creature.position}
-          isActive={isActive}
-          isHovered={isHovered}
-        />
-      )
-    },
-    renderMenu: (creature: CreatureData, handlers: MenuHandlers) => {
-      if (!isSlime(creature)) return null
-      const menuConfig = createSlimeMenuConfig(id, creature, baseCreature.dispatch, handlers, baseCreature.state.creatures)
-      return (
-        <GenericCreatureMenu
-          config={menuConfig}
-          currentMenuState={creature.bubble.menuState}
-          onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
-        />
-      )
-    },
-  })
-
-  const { creature, chatActive } = baseCreature
-
-  // Slime-specific keyboard controls
-  const handleKeyDownRef = useRef<(e: KeyboardEvent) => void | null>(null)
-  const handleKeyUpRef = useRef<(e: KeyboardEvent) => void | null>(null)
-
+  // Keyboard controls for active slime
   useEffect(() => {
     if (!creature || !isSlime(creature)) return
 
@@ -170,7 +168,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
         activeElement?.tagName === "TEXTAREA" ||
         activeElement?.getAttribute("contenteditable") === "true"
 
-      if (baseCreature.state.activeCreatureId !== id || chatActive || isTyping) return
+      if (!isActive || chatActive || isTyping) return
 
       dispatch({ type: "SET_LAST_INTERACTION", payload: { id, value: Date.now() } })
       dispatch({ type: "SET_MODE", payload: { id, value: "user" } })
@@ -203,14 +201,14 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
         activeElement?.tagName === "TEXTAREA" ||
         activeElement?.getAttribute("contenteditable") === "true"
 
-      if (baseCreature.state.activeCreatureId !== id || chatActive || isTyping) return
+      if (!isActive || chatActive || isTyping) return
 
       if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
         e.preventDefault()
         dispatch({ type: "SET_WALKING", payload: { id, value: false } })
       }
     }
-  }, [creature, dispatch, id, baseCreature.state.activeCreatureId, chatActive])
+  }, [creature, dispatch, id, isActive, chatActive])
 
   useEffect(() => {
     const handleKeyDownWrapper = (e: KeyboardEvent) => {
@@ -230,22 +228,18 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     }
   }, [])
 
-  // Jump animation frame increment
   useEffect(() => {
     if (!creature || !isSlime(creature) || !creature.isJumping) return
-
     const interval = setInterval(() => {
       dispatch({ type: "INCREMENT_JUMP_FRAME", payload: id })
-    }, 1000 / SLIME_CREATURE_CONFIG.fps)
-
+    }, 1000 / SLIME_DEFINITION.physics.fps)
     return () => clearInterval(interval)
   }, [creature, dispatch, id])
 
-  // Jump completion check
   useEffect(() => {
     if (!creature || !isSlime(creature)) return
-
-    const jumpCompleted = creature.jumpFrame >= ANIMATION_CONFIG.totalJumpFrames - 1 && creature.isJumping
+    const jumpAnimation = SLIME_DEFINITION.sprites[creature.color].animations.jump!
+    const jumpCompleted = creature.jumpFrame >= jumpAnimation.frameCount - 1 && creature.isJumping
     if (jumpCompleted) {
       dispatch({ type: "SET_JUMPING", payload: { id, value: false } })
       if (creature.bubble.text === "ジャンプ！") {
@@ -256,59 +250,21 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
 
   if (!creature || !isSlime(creature)) return null
 
-  const getCurrentImage = (c: CreatureData) => {
-    if (!isSlime(c)) return ""
-    if (c.isJumping) return `/assets/${c.color}/jump.png`
-    if (c.isWalking) return `/assets/${c.color}/walk.png`
-    return `/assets/${c.color}/idle.png`
-  }
-
-  const getCurrentFrame = (c: CreatureData) => {
-    if (!isSlime(c)) return 0
-    if (c.isJumping) return c.jumpFrame
-    if (c.isWalking) return c.walkFrame
-    return c.idleFrame
-  }
-
-  const renderSprite = ({ creature: c, config, currentImage, backgroundOffsetX, topPosition, isActive, isHovered }: any) => {
-    if (!isSlime(c)) return null
-    return (
-      <CreatureSprite
-        color={c.color}
-        direction={c.direction}
-        currentImage={currentImage}
-        backgroundOffsetX={backgroundOffsetX}
-        topPosition={topPosition}
-        x={c.position}
-        isActive={isActive}
-        isHovered={isHovered}
-      />
-    )
-  }
-
-  const renderMenu = (c: CreatureData, handlers: MenuHandlers) => {
-    if (!isSlime(c)) return null
-    const menuConfig = createSlimeMenuConfig(id, c, baseCreature.dispatch, handlers, baseCreature.state.creatures)
-    return (
-      <GenericCreatureMenu
-        config={menuConfig}
-        currentMenuState={c.bubble.menuState}
-        onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
-      />
-    )
-  }
-
   return (
-    <RenderCreature
-      baseCreature={baseCreature}
-      renderSprite={renderSprite}
-      renderMenu={renderMenu}
-      config={SLIME_CREATURE_CONFIG}
-      getCurrentImage={getCurrentImage}
-      getCurrentFrame={getCurrentFrame}
+    <BaseCreature
+      id={id}
+      definition={SLIME_DEFINITION}
+      getCurrentImage={(c) => isSlime(c) ? getSlimeImage(c) : ""}
+      getCurrentFrame={(c) => isSlime(c) ? getSlimeFrame(c) : 0}
+      calculateTopPosition={(c) => isSlime(c) ? getSlimeTopPosition(c) : SLIME_DEFINITION.physics.groundLevel}
+      getMenuConfig={(c, all, handlers) => isSlime(c) ? getSlimeMenuConfig(id, c, all, handlers, dispatch) : { mainActions: [] }}
+      onCreatureClick={(c) => {
+        if (!isSlime(c)) return
+        dispatch({ type: "SET_JUMPING", payload: { id, value: false } })
+        dispatch({ type: "SET_SLEEPING", payload: { id, value: false } })
+      }}
     />
   )
 }
 
 export default Slime
-

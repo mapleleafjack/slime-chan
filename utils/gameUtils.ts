@@ -1,5 +1,3 @@
-import { ANIMATION_CONFIG } from "@/components/CreatureGame/animationConfig"
-
 export enum DayPhase {
   NIGHT = "NIGHT",
   MORNING = "MORNING",
@@ -106,6 +104,6 @@ export const getRandomJapanesePhrase = () => {
   return japaneseResponses[randomInt(0, japaneseResponses.length - 1)]
 }
 
-export const constrainToGameBounds = (position: number) => {
-  return Math.max(0, Math.min(position, 480 - ANIMATION_CONFIG.frameWidth))
+export const constrainToGameBounds = (position: number, frameWidth: number = 128) => {
+  return Math.max(0, Math.min(position, 480 - frameWidth))
 }

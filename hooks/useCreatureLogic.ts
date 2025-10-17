@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useCallback, useRef, useState } from "react"
-import { ANIMATION_CONFIG } from "@/components/CreatureGame/animationConfig"
 import { getBehaviorDuration, getRandomPhrase, getRandomJapanesePhrase, randomInt } from "@/utils/gameUtils"
 import { useCreature } from "@/context/creatureContext"
 import { isSlime, type Behavior } from "@/types/creatureTypes"
+import { getCreatureDefinition } from "@/components/CreatureGame/creatures"
+import type { CreatureDefinition } from "@/components/CreatureGame/creatures/types"
 
 // Track behavior state outside of component to prevent re-renders
 const slimeBehaviorState = new Map<
@@ -25,14 +26,18 @@ export const useCreatureLogic = (slimeId: string) => {
   const slime = creature && isSlime(creature) ? creature : null
   const [isProcessingEdge, setIsProcessingEdge] = useState(false)
 
+  // Get the creature definition based on creature type
+  const definition: CreatureDefinition | null = creature ? getCreatureDefinition(creature.creatureType) : null
+  const physics = definition?.physics
+
   // Initialize behavior state if not exists
-  if (!slimeBehaviorState.has(slimeId)) {
+  if (!slimeBehaviorState.has(slimeId) && physics) {
     slimeBehaviorState.set(slimeId, {
       isRunningBehavior: false,
       currentBehavior: null,
       lastBehaviorChange: 0,
       isChangingDirection: false,
-      currentSpeed: ANIMATION_CONFIG.baseSpeed,
+      currentSpeed: physics.baseSpeed,
       lastSpeedChange: 0,
     })
   }
@@ -82,6 +87,8 @@ export const useCreatureLogic = (slimeId: string) => {
 
   // Randomly change speed for dynamic movement
   const updateSpeed = useCallback(() => {
+    if (!physics) return
+    
     const behaviorState = slimeBehaviorState.get(slimeId)
     if (!behaviorState) return
 
@@ -90,11 +97,11 @@ export const useCreatureLogic = (slimeId: string) => {
     if (now - behaviorState.lastSpeedChange < 2000) return
 
     // Generate a new random speed between min and max
-    const newSpeed = ANIMATION_CONFIG.minSpeed + Math.random() * (ANIMATION_CONFIG.maxSpeed - ANIMATION_CONFIG.minSpeed)
+    const newSpeed = physics.minSpeed + Math.random() * (physics.maxSpeed - physics.minSpeed)
 
     behaviorState.currentSpeed = newSpeed
     behaviorState.lastSpeedChange = now
-  }, [slimeId])
+  }, [slimeId, physics])
 
   // Set up speed variation interval
   useEffect(() => {
@@ -120,6 +127,8 @@ export const useCreatureLogic = (slimeId: string) => {
   // Increase the animation speed significantly to make movement smoother
   const moveSlime = useCallback(
     (delta: number) => {
+      if (!physics || !definition) return
+      
       const currentSlime = slimeRef.current
       if (!currentSlime) return
 
@@ -128,12 +137,15 @@ export const useCreatureLogic = (slimeId: string) => {
 
       // Get current speed from behavior state
       const behaviorState = slimeBehaviorState.get(slimeId)
-      const currentSpeed = behaviorState ? behaviorState.currentSpeed : ANIMATION_CONFIG.baseSpeed
+      const currentSpeed = behaviorState ? behaviorState.currentSpeed : physics.baseSpeed
+
+      // Get the frameWidth from the creature's sprite definition
+      const frameWidth = definition.sprites[isSlime(currentSlime) ? currentSlime.color : 'default']?.frameWidth || 128
 
       // Use 480 (game width) instead of window.innerWidth to keep slimes within the game container
       const newPosition = Math.max(
         0,
-        Math.min(currentSlime.position + delta * currentSpeed, 480 - ANIMATION_CONFIG.frameWidth),
+        Math.min(currentSlime.position + delta * currentSpeed, 480 - frameWidth),
       )
 
       // Only update position if it's actually changing
@@ -143,13 +155,13 @@ export const useCreatureLogic = (slimeId: string) => {
 
       // Check if we've hit an edge and need to change direction
       const hitLeftEdge = newPosition <= 0
-      const hitRightEdge = newPosition >= 480 - ANIMATION_CONFIG.frameWidth
+      const hitRightEdge = newPosition >= 480 - frameWidth
 
       if ((hitLeftEdge || hitRightEdge) && !isProcessingEdge) {
         handleEdgeCollision(hitLeftEdge)
       }
     },
-    [dispatch, slimeId, isProcessingEdge],
+    [dispatch, slimeId, isProcessingEdge, physics, definition],
   )
 
   // Handle edge collision with debounce to prevent infinite loops
@@ -220,6 +232,8 @@ export const useCreatureLogic = (slimeId: string) => {
 
   // Schedule the next idle jump check
   const scheduleNextIdleJumpCheck = useCallback(() => {
+    if (!physics || !physics.idleJumpProbability) return
+    
     if (idleJumpTimeoutRef.current) {
       clearTimeout(idleJumpTimeoutRef.current)
     }
@@ -228,7 +242,7 @@ export const useCreatureLogic = (slimeId: string) => {
     idleJumpTimeoutRef.current = setTimeout(
       () => {
         // Only attempt to jump if probability check passes
-        if (Math.random() < ANIMATION_CONFIG.idleJumpProbability) {
+        if (Math.random() < physics.idleJumpProbability!) {
           handleIdleJump()
         } else {
           // If we didn't jump this time, schedule another check
@@ -237,7 +251,7 @@ export const useCreatureLogic = (slimeId: string) => {
       },
       randomInt(3000, 8000),
     )
-  }, [handleIdleJump])
+  }, [handleIdleJump, physics])
 
   // Initialize idle jump checking
   useEffect(() => {
@@ -254,6 +268,8 @@ export const useCreatureLogic = (slimeId: string) => {
 
   // Handle automatic behavior selection
   const pickNextBehavior = useCallback(() => {
+    if (!physics || !definition) return
+    
     const currentSlime = slimeRef.current
     if (!currentSlime) return
 
@@ -271,10 +287,13 @@ export const useCreatureLogic = (slimeId: string) => {
     ]
 
     const edgeThreshold = 100
+    
+    // Get the frameWidth from the creature's sprite definition
+    const frameWidth = definition.sprites[isSlime(currentSlime) ? currentSlime.color : 'default']?.frameWidth || 128
 
     if (currentSlime.position < edgeThreshold) {
       behaviors.push("walkRight", "walkRight", "walkRight") // Triple weight for walking right when near left edge
-    } else if (currentSlime.position > 480 - ANIMATION_CONFIG.frameWidth - edgeThreshold) {
+    } else if (currentSlime.position > 480 - frameWidth - edgeThreshold) {
       behaviors.push("walkLeft", "walkLeft", "walkLeft") // Triple weight for walking left when near right edge
     }
 
@@ -291,7 +310,7 @@ export const useCreatureLogic = (slimeId: string) => {
     dispatch({ type: "SET_BEHAVIOR", payload: { id: slimeId, value: choice } })
 
     return choice
-  }, [dispatch, slimeId])
+  }, [dispatch, slimeId, physics, definition])
 
   // Handle behavior execution
   const runBehavior = useCallback(
@@ -391,7 +410,7 @@ export const useCreatureLogic = (slimeId: string) => {
 
   // Modify the animation interval to allow for diagonal jumping
   useEffect(() => {
-    if (!slime) return
+    if (!slime || !physics) return
 
     // Clear any existing animation frame
     if (animationFrameIdRef.current !== null) {
@@ -406,13 +425,13 @@ export const useCreatureLogic = (slimeId: string) => {
       const elapsed = timestamp - lastTimestamp
 
       // Only update at the desired frame rate
-      if (elapsed > 1000 / ANIMATION_CONFIG.fps) {
+      if (elapsed > 1000 / physics.fps) {
         const currentSlime = slimeRef.current
         if (currentSlime) {
           // Allow walking while jumping (diagonal jumping)
           if (currentSlime.isWalking && !isProcessingEdge) {
             dispatch({ type: "INCREMENT_WALK_FRAME", payload: slimeId })
-            moveSlime(ANIMATION_CONFIG.baseSpeed * currentSlime.direction)
+            moveSlime(physics.baseSpeed * currentSlime.direction)
           }
 
           if (currentSlime.isJumping) {
@@ -420,7 +439,7 @@ export const useCreatureLogic = (slimeId: string) => {
 
             // Add horizontal movement during jump if walking is also active
             if (currentSlime.isWalking && !isProcessingEdge) {
-              moveSlime(ANIMATION_CONFIG.baseSpeed * 0.7 * currentSlime.direction)
+              moveSlime(physics.baseSpeed * 0.7 * currentSlime.direction)
             }
           }
 
@@ -441,7 +460,7 @@ export const useCreatureLogic = (slimeId: string) => {
         cancelAnimationFrame(animationFrameIdRef.current)
       }
     }
-  }, [dispatch, moveSlime, slimeId, slime, isProcessingEdge])
+  }, [dispatch, moveSlime, slimeId, slime, isProcessingEdge, physics])
 
   // Initialize behavior once
   useEffect(() => {
