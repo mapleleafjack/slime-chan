@@ -59,15 +59,8 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "@testing-library/dom": "latest",
-    "react-router-dom": "latest",
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
-    "path": "latest",
-    "electron": "latest",
-    "electron-updater": "latest",
-    "electron-log": "latest",
-    "dotenv": "latest",
-    "url": "latest",
     "pixel-retroui": "latest"
   },
   "devDependencies": {
