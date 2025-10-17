@@ -40,9 +40,6 @@ export const DayPhaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const now = debugTime || new Date()
       const { phase, opacity } = calculateOverlay(now)
 
-      // Optional debug logging - can be removed in production
-      console.log(`Current time: ${now.toLocaleTimeString()}, Phase: ${phase}, Opacity: ${opacity.toFixed(2)}`)
-
       setState({
         currentPhase: phase,
         currentDateTime: now,

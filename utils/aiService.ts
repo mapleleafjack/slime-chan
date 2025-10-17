@@ -1,5 +1,5 @@
 import type { AIConfig } from "@/context/aiConfigContext"
-import type { SlimeData } from "@/context/slimeContext"
+import type { SlimeData, Message } from "@/context/slimeContext"
 
 export interface AIMessage {
   role: "system" | "user" | "assistant"
@@ -29,20 +29,20 @@ export const generateSystemPrompt = (slime: SlimeData, customPersonality?: strin
   const personalityTrait = customPersonality || PERSONALITY_DESCRIPTIONS[slime.personality] || "playful and friendly"
   
   return `You are a cute ${slime.color} slime character named Slime-chan. You have a ${personalityTrait} personality.
-You speak in a mix of English and Japanese (romanized), keeping responses SHORT (1-3 sentences max).
-Your responses should be cute, expressive, and use emoticons or Japanese expressions like:
+
+IMPORTANT: Always respond in English. You may occasionally use Japanese expressions for cuteness, but the main response must be in English.
+
+Keep responses SHORT (1-2 sentences max). Be cute, expressive, and in-character.
+You can use Japanese expressions sparingly for flavor, like:
 - ブロップ (buroppu - blob sound)
 - わくわく (wakuwaku - excited)
-- ふわふわ (fuwafuwa - fluffy/soft)
-- きらきら (kirakira - sparkly)
-- ねむい (nemui - sleepy)
-- たのしい (tanoshii - fun)
+- ふわふわ (fuwafuwa - fluffy)
 
 Current state:
 - Mood: ${slime.isSleeping ? "sleepy" : slime.isJumping ? "energetic" : slime.isWalking ? "active" : "relaxed"}
 - Activity: ${slime.isSleeping ? "sleeping" : slime.isJumping ? "jumping" : slime.isWalking ? "walking around" : "resting"}
 
-Keep responses very brief, cute, and in-character. Use Japanese words naturally but don't overdo it.`
+Remember previous messages in the conversation and reference them naturally. Keep your personality consistent throughout the conversation.`
 }
 
 /**
@@ -99,6 +99,16 @@ export const callAI = async (config: AIConfig, messages: AIMessage[]): Promise<A
 }
 
 /**
+ * Convert conversation history to AI messages format
+ */
+const convertHistoryToMessages = (history: Message[]): AIMessage[] => {
+  return history.map((msg) => ({
+    role: msg.role === "user" ? "user" : "assistant",
+    content: msg.content,
+  })) as AIMessage[]
+}
+
+/**
  * Generate a response from the slime based on user message
  */
 export const generateSlimeResponse = async (
@@ -106,17 +116,26 @@ export const generateSlimeResponse = async (
   slime: SlimeData,
   userMessage: string,
   personality?: string,
+  conversationHistory?: Message[],
 ): Promise<AIResponse> => {
   const messages: AIMessage[] = [
     {
       role: "system",
       content: generateSystemPrompt(slime, personality),
     },
-    {
-      role: "user",
-      content: userMessage,
-    },
   ]
+
+  // Add conversation history if available (but limit to last 10 messages to avoid token limits)
+  if (conversationHistory && conversationHistory.length > 0) {
+    const recentHistory = conversationHistory.slice(-10)
+    messages.push(...convertHistoryToMessages(recentHistory))
+  }
+
+  // Add the current user message
+  messages.push({
+    role: "user",
+    content: userMessage,
+  })
 
   return callAI(config, messages)
 }

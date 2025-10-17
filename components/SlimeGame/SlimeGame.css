@@ -491,3 +491,15 @@
     filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)) brightness(1.1);
   }
 }
+
+/* Slide-in animation for SlimeDetailPanel */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

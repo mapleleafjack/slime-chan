@@ -48,8 +48,16 @@ export const useSlimeAI = (slimeId: string) => {
         dispatch({ type: "SET_LAST_INTERACTION", payload: { id: slimeId, value: Date.now() } })
         dispatch({ type: "SET_MODE", payload: { id: slimeId, value: "user" } })
 
-        // Show initial bubble
-        dispatch({ type: "SHOW_BUBBLE", payload: { id: slimeId, text: "..." } })
+        // Add user message to conversation history
+        const userMessage = {
+          id: `${slimeId}-${Date.now()}-user`,
+          role: "user" as const,
+          content: message,
+          timestamp: Date.now(),
+        }
+        dispatch({ type: "ADD_MESSAGE", payload: { id: slimeId, message: userMessage } })
+
+        // Show thinking state
         dispatch({ type: "SET_THINKING", payload: { id: slimeId, value: true } })
 
         // Add a small delay to prevent text flashing
@@ -63,7 +71,13 @@ export const useSlimeAI = (slimeId: string) => {
         // Try to use AI if configured, otherwise fall back to random phrases
         if (isConfigured) {
           console.log(`🤖 Using AI to respond to: "${message}"`)
-          const aiResponse = await generateSlimeResponse(config, currentSlime, message, currentSlime.personality)
+          const aiResponse = await generateSlimeResponse(
+            config,
+            currentSlime,
+            message,
+            currentSlime.personality,
+            currentSlime.conversationHistory,
+          )
 
           if (aiResponse.success) {
             console.log(`✓ AI response: "${aiResponse.message}"`)
@@ -80,7 +94,16 @@ export const useSlimeAI = (slimeId: string) => {
           responseText = getFallbackResponse()
         }
 
-        // Update bubble and keep in user mode
+        // Add slime response to conversation history
+        const slimeMessage = {
+          id: `${slimeId}-${Date.now()}-slime`,
+          role: "slime" as const,
+          content: responseText,
+          timestamp: Date.now(),
+        }
+        dispatch({ type: "ADD_MESSAGE", payload: { id: slimeId, message: slimeMessage } })
+
+        // Also update bubble for slimes that don't have the panel open
         dispatch({ type: "UPDATE_BUBBLE_TEXT", payload: { id: slimeId, text: responseText } })
         dispatch({ type: "SET_LAST_INTERACTION", payload: { id: slimeId, value: Date.now() } })
 
@@ -89,7 +112,7 @@ export const useSlimeAI = (slimeId: string) => {
           clearTimeout(timeoutRef.current)
         }
 
-        // Auto-hide after 8 seconds if menu is not open (longer for AI responses)
+        // Auto-hide bubble after 8 seconds if menu is not open (longer for AI responses)
         timeoutRef.current = setTimeout(() => {
           if (!isMountedRef.current) return
 

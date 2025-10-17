@@ -102,6 +102,10 @@ const japaneseResponses = [
   "ぽよぽよ",
 ]
 
+export const getRandomJapanesePhrase = () => {
+  return japaneseResponses[randomInt(0, japaneseResponses.length - 1)]
+}
+
 export const constrainToGameBounds = (position: number) => {
   return Math.max(0, Math.min(position, 480 - ANIMATION_CONFIG.frameWidth))
 }

@@ -13,6 +13,14 @@ export type MenuState = "main" | "color" | "chat" | "none"
 // Personality traits for slimes
 export type Personality = "playful" | "shy" | "energetic" | "calm" | "curious" | "sleepy"
 
+// Message type for conversation history
+export type Message = {
+  id: string
+  role: "user" | "slime"
+  content: string
+  timestamp: number
+}
+
 // Update the SlimeData type to include showMenu flag and personality
 export type SlimeData = {
   id: string
@@ -35,6 +43,7 @@ export type SlimeData = {
     menuState: MenuState
   }
   isThinking: boolean
+  conversationHistory: Message[]
 }
 
 // Add new action types
@@ -61,6 +70,8 @@ type SlimeAction =
   | { type: "UPDATE_BUBBLE_TEXT"; payload: { id: string; text: string } }
   | { type: "SET_MENU_STATE"; payload: { id: string; state: MenuState } }
   | { type: "HIDE_ALL_BUBBLES"; payload: void }
+  | { type: "ADD_MESSAGE"; payload: { id: string; message: Message } }
+  | { type: "CLEAR_CONVERSATION"; payload: string }
 
 export type SlimeState = {
   slimes: SlimeData[]
@@ -115,6 +126,7 @@ const createInitialSlime = (id: string, color: SlimeColor, position: number): Sl
     menuState: "none",
   },
   isThinking: false,
+  conversationHistory: [],
 })
 
 const slimeReducer = (state: SlimeState, action: SlimeAction): SlimeState => {
@@ -338,6 +350,25 @@ const slimeReducer = (state: SlimeState, action: SlimeAction): SlimeState => {
       return {
         ...state,
         slimes: updatedSlimes,
+      }
+    case "ADD_MESSAGE":
+      return {
+        ...state,
+        slimes: state.slimes.map((slime) =>
+          slime.id === action.payload.id
+            ? {
+                ...slime,
+                conversationHistory: [...slime.conversationHistory, action.payload.message],
+              }
+            : slime,
+        ),
+      }
+    case "CLEAR_CONVERSATION":
+      return {
+        ...state,
+        slimes: state.slimes.map((slime) =>
+          slime.id === action.payload ? { ...slime, conversationHistory: [] } : slime,
+        ),
       }
     default:
       return state

@@ -4,8 +4,6 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import SlimeSprite from "./SlimeSprite"
 import { useSlime } from "@/context/slimeContext"
-import { useSlimeAI } from "@/hooks/useSlimeAI"
-import { useAIConfig } from "@/context/aiConfigContext"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { ANIMATION_CONFIG } from "./animationConfig"
 import { DayPhase } from "@/utils/slimeUtils"
@@ -19,8 +17,6 @@ interface SlimeProps {
 const Slime: React.FC<SlimeProps> = ({ id }) => {
   const { state, dispatch } = useSlime()
   const { currentPhase } = useDayCycle()
-  const { handleUserMessage } = useSlimeAI(id)
-  const { isConfigured } = useAIConfig()
   const [isHovered, setIsHovered] = useState(false)
   const slimeRef = useRef<HTMLDivElement>(null)
 
@@ -78,11 +74,6 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     dispatch({ type: "SET_MENU_STATE", payload: { id, state: "color" } })
   }
 
-  const handleChatMenu = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    dispatch({ type: "SET_MENU_STATE", payload: { id, state: "chat" } })
-  }
-
   const handleBackToMainMenu = (e: React.MouseEvent) => {
     e.stopPropagation()
     dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })
@@ -122,22 +113,31 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   // Keyboard controls (only work when slime is selected and chat is NOT active)
   useEffect(() => {
     handleKeyDownRef.current = (e: KeyboardEvent) => {
+      // Check if user is typing in an input field
+      const activeElement = document.activeElement
+      const isTyping = activeElement?.tagName === 'INPUT' || 
+                       activeElement?.tagName === 'TEXTAREA' ||
+                       activeElement?.getAttribute('contenteditable') === 'true'
+      
       // Only handle keyboard controls for the selected slime and when chat is not active
-      if (state.activeSlimeId !== id || chatActive) return
+      if (state.activeSlimeId !== id || chatActive || isTyping) return
 
       dispatch({ type: "SET_LAST_INTERACTION", payload: { id, value: Date.now() } })
       dispatch({ type: "SET_MODE", payload: { id, value: "user" } })
 
       switch (e.code) {
         case "ArrowLeft":
+          e.preventDefault()
           dispatch({ type: "SET_DIRECTION", payload: { id, value: -1 } })
           dispatch({ type: "SET_WALKING", payload: { id, value: true } })
           break
         case "ArrowRight":
+          e.preventDefault()
           dispatch({ type: "SET_DIRECTION", payload: { id, value: 1 } })
           dispatch({ type: "SET_WALKING", payload: { id, value: true } })
           break
         case "Space":
+          e.preventDefault()
           if (!slime.isJumping) {
             dispatch({ type: "SET_JUMPING", payload: { id, value: true } })
             dispatch({ type: "SHOW_BUBBLE", payload: { id, text: "ジャンプ！" } })
@@ -148,10 +148,17 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     }
 
     handleKeyUpRef.current = (e: KeyboardEvent) => {
+      // Check if user is typing in an input field
+      const activeElement = document.activeElement
+      const isTyping = activeElement?.tagName === 'INPUT' || 
+                       activeElement?.tagName === 'TEXTAREA' ||
+                       activeElement?.getAttribute('contenteditable') === 'true'
+      
       // Only handle keyboard controls for the selected slime and when chat is not active
-      if (state.activeSlimeId !== id || chatActive) return
+      if (state.activeSlimeId !== id || chatActive || isTyping) return
 
       if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+        e.preventDefault()
         dispatch({ type: "SET_WALKING", payload: { id, value: false } })
       }
     }
@@ -312,11 +319,6 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
           <div className="bubble">
             {slime.bubble.menuState === "main" ? (
               <div className="slime-menu">
-                {isConfigured && (
-                  <button className="slime-menu-btn chat" onClick={handleChatMenu} title="Chat with AI">
-                    💬
-                  </button>
-                )}
                 <button className="slime-menu-btn color" onClick={handleColorMenu} title="Change Color">
                   🎨
                 </button>
