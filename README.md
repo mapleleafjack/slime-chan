@@ -17,11 +17,29 @@ An interactive virtual pet game with AI-powered conversations! Watch your cute s
 # Install dependencies
 yarn install
 
+# Set up API key (required for AI chat)
+cp .env.example .env.local
+# Edit .env.local and add your DeepSeek API key
+
 # Run development server
 yarn dev
 
 # Open http://localhost:3000
 ```
+
+## 🔑 API Key Setup
+
+To enable AI conversations with your creatures:
+
+1. **Get a DeepSeek API key** from [https://platform.deepseek.com/](https://platform.deepseek.com/)
+2. **Copy the example env file**: `cp .env.example .env.local`
+3. **Add your API key** to `.env.local`:
+   ```
+   NEXT_PUBLIC_DEEPSEEK_API_KEY=your-api-key-here
+   ```
+4. **Restart the dev server** if it's already running
+
+⚠️ **Important**: Never commit `.env.local` to git! It's already in `.gitignore`.
 
 ## 💬 How to Chat with Slimes
 
@@ -37,15 +55,11 @@ yarn dev
 
 ## 🤖 AI Setup (Optional)
 
-Want your slimes to have intelligent conversations? Configure AI in 3 steps:
+The app now uses DeepSeek AI by default for intelligent creature conversations.
 
-1. Get an API key from [DeepSeek](https://platform.deepseek.com/) (recommended, very affordable) or [OpenAI](https://platform.openai.com/)
-2. Click the ⚙️ settings button in the app
-3. Paste your API key and test the connection
+✅ **API key is configured via environment variable** (see setup above)
 
-📖 **Setup Guide**: See [docs/QUICK_START.md](docs/QUICK_START.md)
-
-💡 **Without AI configured**, slimes still work perfectly with pre-programmed cute phrases!
+💡 **Without an API key**, creatures will still respond with pre-programmed phrases!
 
 ## 📁 Documentation
 

@@ -9,7 +9,7 @@ import { generateSlimeResponse, generateAutonomousSpeech, getFallbackResponse } 
 export const useCreatureAI = (creatureId: string) => {
   const { state, dispatch } = useCreature()
   const creature = state.creatures.find((c) => c.id === creatureId)
-  const { config, isConfigured } = useAIConfig()
+  const { config } = useAIConfig()
   const [isProcessing, setIsProcessing] = useState(false)
 
   const creatureRef = useRef(creature)
@@ -177,29 +177,23 @@ export const useCreatureAI = (creatureId: string) => {
 
         let responseText: string
 
-        // Try to use AI if configured, otherwise fall back to random phrases
-        if (isConfigured) {
-          console.log(`🤖 Using AI to respond to: "${message}"`)
-          const aiResponse = await generateSlimeResponse(
-            config,
-            currentCreature,
-            message,
-            currentCreature.personality,
-            currentCreature.conversationHistory,
-          )
+        // Always use AI (DeepSeek is now hardcoded)
+        console.log(`🤖 Using AI to respond to: "${message}"`)
+        const aiResponse = await generateSlimeResponse(
+          config,
+          currentCreature,
+          message,
+          currentCreature.personality,
+          currentCreature.conversationHistory,
+        )
 
-          if (aiResponse.success) {
-            console.log(`✓ AI response: "${aiResponse.message}"`)
-            responseText = aiResponse.message
-          } else {
-            // Log error but don't show to user, fall back to random phrase
-            console.warn("⚠️ AI response failed:", aiResponse.error)
-            console.log("↻ Using fallback response")
-            responseText = getFallbackResponse(currentCreature)
-          }
+        if (aiResponse.success) {
+          console.log(`✓ AI response: "${aiResponse.message}"`)
+          responseText = aiResponse.message
         } else {
-          // Use fallback when AI is not configured
-          console.log("ℹ️ AI not configured, using fallback response")
+          // Log error but don't show to user, fall back to random phrase
+          console.warn("⚠️ AI response failed:", aiResponse.error)
+          console.log("↻ Using fallback response")
           responseText = getFallbackResponse(currentCreature)
         }
 
@@ -238,7 +232,7 @@ export const useCreatureAI = (creatureId: string) => {
         }
       }
     },
-    [dispatch, creatureId, state.creatures, isProcessing, config, isConfigured],
+    [dispatch, creatureId, state.creatures, isProcessing, config],
   )
 
   // Auto-interaction when in talk mode
@@ -257,12 +251,9 @@ export const useCreatureAI = (creatureId: string) => {
 
         let responseText: string
 
-        if (isConfigured) {
-          const aiResponse = await generateAutonomousSpeech(config, creature, creature.personality)
-          responseText = aiResponse.success ? aiResponse.message : getFallbackResponse(creature)
-        } else {
-          responseText = getFallbackResponse(creature)
-        }
+        // Always use AI (DeepSeek is now hardcoded)
+        const aiResponse = await generateAutonomousSpeech(config, creature, creature.personality)
+        responseText = aiResponse.success ? aiResponse.message : getFallbackResponse(creature)
 
         dispatch({ type: "UPDATE_BUBBLE_TEXT", payload: { id: creatureId, text: responseText } })
         dispatch({ type: "SET_THINKING", payload: { id: creatureId, value: false } })
@@ -271,7 +262,7 @@ export const useCreatureAI = (creatureId: string) => {
 
       generateAutonomous()
     }
-  }, [creature?.currentBehavior, creature, isProcessing, state.activeCreatureId, creatureId, config, isConfigured, dispatch])
+  }, [creature?.currentBehavior, creature, isProcessing, state.activeCreatureId, creatureId, config, dispatch])
 
   return { handleUserMessage }
 }

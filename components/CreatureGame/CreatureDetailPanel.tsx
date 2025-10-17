@@ -678,7 +678,7 @@ const CreatureDetailPanel: React.FC = () => {
         </Card>
       )}
 
-      {/* No AI Config Message */}
+      {/* No API Key Warning */}
       {!isConfigured && (
         <Card
           bg="rgba(0, 0, 0, 0.85)"
@@ -696,9 +696,14 @@ const CreatureDetailPanel: React.FC = () => {
               color: "rgba(255, 255, 255, 0.7)",
               fontSize: "12px",
               fontFamily: "monospace",
+              lineHeight: "1.6",
             }}
           >
-            ⚠️ Configure AI in the menu to chat
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>⚠️</div>
+            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>API Key Not Configured</div>
+            <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.5)" }}>
+              Please add your DeepSeek API key to .env.local
+            </div>
           </div>
         </Card>
       )}
