@@ -6,7 +6,7 @@ import { isSlime } from "@/types/creatureTypes"
 import { useAIConfig } from "@/context/aiConfigContext"
 import { generateSlimeResponse, generateAutonomousSpeech, getFallbackResponse } from "@/utils/aiService"
 
-export const useSlimeAI = (creatureId: string) => {
+export const useCreatureAI = (creatureId: string) => {
   const { state, dispatch } = useCreature()
   const creature = state.creatures.find((c) => c.id === creatureId)
   const { config, isConfigured } = useAIConfig()

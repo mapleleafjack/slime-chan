@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react"
 import { useCreature } from "@/context/creatureContext"
 import { isMushroom } from "@/types/creatureTypes"
 import { useDayCycle } from "@/context/dayCycleContext"
-import { DayPhase } from "@/utils/slimeUtils"
-import { ANIMATION_CONFIG } from "./animationConfig"
+import { DayPhase } from "@/utils/gameUtils"
+import { ANIMATION_CONFIG } from "../animationConfig"
 
 const MUSHROOM_CONFIG = {
   frameWidth: 48,

@@ -1,4 +1,4 @@
-import { ANIMATION_CONFIG } from "@/components/SlimeGame/animationConfig"
+import { ANIMATION_CONFIG } from "@/components/CreatureGame/animationConfig"
 
 export enum DayPhase {
   NIGHT = "NIGHT",

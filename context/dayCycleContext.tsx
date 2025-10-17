@@ -1,6 +1,6 @@
 "use client"
 
-import { calculateOverlay, type DayPhase } from "@/utils/slimeUtils"
+import { calculateOverlay, type DayPhase } from "@/utils/gameUtils"
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useRef } from "react"
 

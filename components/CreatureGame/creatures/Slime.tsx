@@ -2,14 +2,14 @@
 
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
-import SlimeSprite from "./SlimeSprite"
+import CreatureSprite from "../CreatureSprite"
 import { useCreature } from "@/context/creatureContext"
 import { isSlime } from "@/types/creatureTypes"
 import { useDayCycle } from "@/context/dayCycleContext"
-import { ANIMATION_CONFIG } from "./animationConfig"
-import { DayPhase } from "@/utils/slimeUtils"
+import { ANIMATION_CONFIG } from "../animationConfig"
+import { DayPhase } from "@/utils/gameUtils"
 // Import getRandomPhrase at the top of the file
-import { getRandomPhrase } from "@/utils/slimeUtils"
+import { getRandomPhrase } from "@/utils/gameUtils"
 
 interface SlimeProps {
   id: string
@@ -299,7 +299,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
       className={isActive ? "active-slime" : ""}
     >
       {renderAura()}
-      <SlimeSprite
+      <CreatureSprite
         color={slime.color}
         direction={slime.direction}
         currentImage={getCurrentImage()}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useCreature } from "@/context/creatureContext"
 import { isSlime } from "@/types/creatureTypes"
-import { useSlimeAI } from "@/hooks/useSlimeAI"
+import { useCreatureAI } from "@/hooks/useCreatureAI"
 import { Button, Card } from "pixel-retroui"
 
 const ChatInput: React.FC = () => {
@@ -15,7 +15,7 @@ const ChatInput: React.FC = () => {
   // Only slimes can talk - check capabilities
   const canTalk = activeCreature?.capabilities.canTalk ?? false
   const activeSlime = activeCreature && isSlime(activeCreature) ? activeCreature : null
-  const { handleUserMessage } = useSlimeAI(state.activeCreatureId || "")
+  const { handleUserMessage } = useCreatureAI(state.activeCreatureId || "")
 
   // Broadcast chat active state whenever it changes
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { ANIMATION_CONFIG } from "@/components/SlimeGame/animationConfig"
+import { ANIMATION_CONFIG } from "@/components/CreatureGame/animationConfig"
 import type {
   CreatureData,
   SlimeData,

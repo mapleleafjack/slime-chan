@@ -2,7 +2,7 @@
 import { useDayCycle } from "@/context/dayCycleContext"
 import { useAIConfig, AIProvider } from "@/context/aiConfigContext"
 import { testAIConnection } from "@/utils/aiService"
-import { DayPhase } from "@/utils/slimeUtils"
+import { DayPhase } from "@/utils/gameUtils"
 import { useState } from "react"
 
 const DebugMenu = () => {

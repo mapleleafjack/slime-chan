@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import { useCreature } from "@/context/creatureContext"
 import { isSlime, isMushroom } from "@/types/creatureTypes"
-import { useSlimeAI } from "@/hooks/useSlimeAI"
+import { useCreatureAI } from "@/hooks/useCreatureAI"
 import { useAIConfig } from "@/context/aiConfigContext"
 import { Card, Button } from "pixel-retroui"
 import { ANIMATION_CONFIG } from "./animationConfig"
@@ -16,7 +16,7 @@ const MUSHROOM_CONFIG = {
   fps: 12,
 }
 
-const SlimeDetailPanel: React.FC = () => {
+const CreatureDetailPanel: React.FC = () => {
   const { state, dispatch } = useCreature()
   const { isConfigured } = useAIConfig()
   const [message, setMessage] = useState("")
@@ -29,7 +29,7 @@ const SlimeDetailPanel: React.FC = () => {
   const activeSlime = activeCreature && isSlime(activeCreature) ? activeCreature : null
   const activeMushroom = activeCreature && isMushroom(activeCreature) ? activeCreature : null
   const canTalk = activeCreature?.capabilities.canTalk ?? false
-  const { handleUserMessage } = useSlimeAI(state.activeCreatureId || "")
+  const { handleUserMessage } = useCreatureAI(state.activeCreatureId || "")
 
   // Animate the sprite
   useEffect(() => {
@@ -531,5 +531,5 @@ const SlimeDetailPanel: React.FC = () => {
   )
 }
 
-export default SlimeDetailPanel
+export default CreatureDetailPanel
 

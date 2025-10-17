@@ -3,7 +3,7 @@
 import type React from "react"
 import { useEffect, useRef } from "react"
 import { useDayCycle } from "@/context/dayCycleContext"
-import { DayPhase } from "@/utils/slimeUtils"
+import { DayPhase } from "@/utils/gameUtils"
 
 type SlimeSpriteProps = {
   color: "blue" | "red" | "green"

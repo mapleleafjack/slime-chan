@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useCallback, useRef, useState } from "react"
-import { ANIMATION_CONFIG } from "@/components/SlimeGame/animationConfig"
-import { getBehaviorDuration, getRandomPhrase, getRandomJapanesePhrase, randomInt } from "@/utils/slimeUtils"
+import { ANIMATION_CONFIG } from "@/components/CreatureGame/animationConfig"
+import { getBehaviorDuration, getRandomPhrase, getRandomJapanesePhrase, randomInt } from "@/utils/gameUtils"
 import { useCreature } from "@/context/creatureContext"
 import { isSlime, type Behavior } from "@/types/creatureTypes"
 
@@ -19,7 +19,7 @@ const slimeBehaviorState = new Map<
   }
 >()
 
-export const useSlimeLogic = (slimeId: string) => {
+export const useCreatureLogic = (slimeId: string) => {
   const { state, dispatch } = useCreature()
   const creature = state.creatures.find((c) => c.id === slimeId)
   const slime = creature && isSlime(creature) ? creature : null

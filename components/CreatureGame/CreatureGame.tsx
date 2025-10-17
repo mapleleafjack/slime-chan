@@ -3,19 +3,19 @@
 import type React from "react"
 
 import { useEffect, useState, useCallback } from "react"
-import "./SlimeGame.css"
-import MainWidget from "./MainWidget"
-import MainMenu from "./MainMenu"
-import NightSparkles from "./NightSparkles"
-import SlimeManager from "./SlimeManager"
-import SunnyOverlay from "./SunnyOverlay"
-import SlimeDetailPanel from "./SlimeDetailPanel"
+import "./CreatureGame.css"
+import MainWidget from "./ui/MainWidget"
+import MainMenu from "./ui/MainMenu"
+import NightSparkles from "./effects/NightSparkles"
+import CreatureManager from "./CreatureManager"
+import SunnyOverlay from "./effects/SunnyOverlay"
+import CreatureDetailPanel from "./CreatureDetailPanel"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { calculateWeather, getWeatherDuration, Weather } from "@/utils/weatherUtils"
-import { DayPhase } from "@/utils/slimeUtils"
+import { DayPhase } from "@/utils/gameUtils"
 import { CreatureProvider, useCreature } from "@/context/creatureContext"
 
-const SlimeGameContent = () => {
+const CreatureGameContent = () => {
   const { currentPhase, currentDateTime, dayPhaseOpacity } = useDayCycle()
   const { dispatch } = useCreature()
 
@@ -83,17 +83,17 @@ const SlimeGameContent = () => {
 
         <MainMenu />
         <MainWidget currentDateTime={currentDateTime} />
-        <SlimeManager />
+        <CreatureManager />
       </div>
-      <SlimeDetailPanel />
+      <CreatureDetailPanel />
     </div>
   )
 }
 
-export default function SlimeGame() {
+export default function CreatureGame() {
   return (
     <CreatureProvider>
-      <SlimeGameContent />
+      <CreatureGameContent />
     </CreatureProvider>
   )
 }

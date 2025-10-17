@@ -5,12 +5,12 @@ import type React from "react"
 import { useEffect, useRef } from "react"
 import { useCreature, createInitialSlime, createInitialMushroom } from "@/context/creatureContext"
 import { isSlime, isMushroom } from "@/types/creatureTypes"
-import Slime from "./Slime"
-import Mushroom from "./Mushroom"
-import SlimeLogicWrapper from "./SlimeLogicWrapper"
-import { randomInt } from "@/utils/slimeUtils"
+import Slime from "./creatures/Slime"
+import Mushroom from "./creatures/Mushroom"
+import CreatureLogicWrapper from "./CreatureLogicWrapper"
+import { randomInt } from "@/utils/gameUtils"
 
-const SlimeManager = () => {
+const CreatureManager = () => {
   const { state, dispatch } = useCreature()
   const addButtonClickedRef = useRef(false)
   const addButtonTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -91,9 +91,9 @@ const SlimeManager = () => {
 
   return (
     <>
-      {/* Render SlimeLogicWrapper components for each slime */}
+      {/* Render CreatureLogicWrapper components for each slime */}
       {state.creatures.filter((c) => isSlime(c)).map((slime) => (
-        <SlimeLogicWrapper key={`logic-${slime.id}`} id={slime.id} />
+        <CreatureLogicWrapper key={`logic-${slime.id}`} id={slime.id} />
       ))}
 
       {/* Render Slime components for each slime */}
@@ -113,4 +113,4 @@ const SlimeManager = () => {
   )
 }
 
-export default SlimeManager
+export default CreatureManager

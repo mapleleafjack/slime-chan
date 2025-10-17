@@ -1,7 +1,7 @@
 "use client"
 
 import { useDayCycle } from "@/context/dayCycleContext"
-import { DayPhase, randomInt } from "@/utils/slimeUtils"
+import { DayPhase, randomInt } from "@/utils/gameUtils"
 import type React from "react"
 import { useState, useEffect } from "react"
 

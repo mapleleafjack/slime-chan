@@ -2,7 +2,7 @@
 
 ## Overview
 
-Slime-chan now features advanced AI integration that allows your slimes to have intelligent, context-aware conversations! The system is compatible with multiple AI providers including DeepSeek, OpenAI, and any OpenAI-compatible API.
+Slime-chan now features advanced AI integration that allows your creatures (slimes, mushrooms, etc.) to have intelligent, context-aware conversations! The system is compatible with multiple AI providers including DeepSeek, OpenAI, and any OpenAI-compatible API.
 
 ## Features
 
@@ -12,7 +12,7 @@ Slime-chan now features advanced AI integration that allows your slimes to have 
 - **Custom**: Any OpenAI-compatible API endpoint
 
 ### 🎭 Personality System
-Each slime has a unique personality that influences their responses:
+Each creature has a unique personality that influences their responses:
 - **Playful**: Fun-loving and ready for adventures
 - **Shy**: Timid and speaks softly
 - **Energetic**: Full of excitement and bouncy energy
@@ -22,13 +22,13 @@ Each slime has a unique personality that influences their responses:
 
 ### 🧠 Context-Aware Responses
 The AI considers:
-- Current slime activity (walking, jumping, sleeping, idle)
-- Slime personality
-- Slime color
+- Current creature activity (walking, jumping, glowing, idle)
+- Creature personality and type (slime, mushroom, etc.)
+- Creature-specific attributes (slime color, mushroom glow, etc.)
 - Conversation history
 
 ### 🔄 Automatic Fallback
-If AI is not configured or fails, slimes automatically use pre-programmed cute Japanese phrases.
+If AI is not configured or fails, creatures automatically use pre-programmed personality-appropriate phrases (cute Japanese phrases for slimes, mystical nature phrases for mushrooms).
 
 ## Setup Guide
 
@@ -66,13 +66,13 @@ Adjust these for different response styles:
 ## Usage
 
 ### Interactive Mode
-1. Click on a slime to select it
-2. Type a message in the input box
-3. The slime will respond using AI (if configured) or fallback phrases
+1. Click on a creature to select it
+2. Type a message in the input box (if the creature has talk capability)
+3. The creature will respond using AI (if configured) or fallback phrases
 
 ### Autonomous Mode
-- Slimes in "talk" behavior will occasionally speak on their own
-- These autonomous thoughts are context-aware based on their current activity
+- Creatures with talk behavior will occasionally speak on their own
+- These autonomous thoughts are context-aware based on their current activity and type
 
 ## Architecture
 
