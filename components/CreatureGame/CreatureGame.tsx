@@ -14,10 +14,18 @@ import { useDayCycle } from "@/context/dayCycleContext"
 import { calculateWeather, getWeatherDuration, Weather } from "@/utils/weatherUtils"
 import { DayPhase } from "@/utils/gameUtils"
 import { CreatureProvider, useCreature } from "@/context/creatureContext"
+import { useGamePersistence } from "@/hooks/useGamePersistence"
 
-const CreatureGameContent = () => {
+interface CreatureGameProps {
+  onShowAuth?: () => void
+}
+
+const CreatureGameContent = ({ onShowAuth }: CreatureGameProps) => {
   const { currentPhase, currentDateTime, dayPhaseOpacity } = useDayCycle()
   const { dispatch } = useCreature()
+  
+  // Initialize game persistence (auto-save and load)
+  const { hasLoaded, isLoading } = useGamePersistence()
 
   // Use the provided background image
   const backgroundImage = "/assets/background.png"
@@ -63,7 +71,7 @@ const CreatureGameContent = () => {
 
   return (
     <div className="game-container">
-      <MainMenu />
+      <MainMenu onShowAuth={onShowAuth} />
       <div
         className={`slime-game ${currentPhase === DayPhase.DAY ? "day-mode" : ""}`}
         style={{ backgroundImage: `url(${backgroundImage})` }}
@@ -83,17 +91,17 @@ const CreatureGameContent = () => {
         <NightSparkles />
 
         <MainWidget currentDateTime={currentDateTime} />
-        <CreatureManager />
+        <CreatureManager hasLoadedGame={hasLoaded} isLoadingGame={isLoading} />
       </div>
       <CreatureDetailPanel />
     </div>
   )
 }
 
-export default function CreatureGame() {
+export default function CreatureGame({ onShowAuth }: CreatureGameProps) {
   return (
     <CreatureProvider>
-      <CreatureGameContent />
+      <CreatureGameContent onShowAuth={onShowAuth} />
     </CreatureProvider>
   )
 }

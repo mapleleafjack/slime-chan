@@ -22,6 +22,7 @@ import { getCreatureDefinition } from "@/components/CreatureGame/creatures"
 type CreatureAction =
   | { type: "ADD_CREATURE"; payload: CreatureData }
   | { type: "REMOVE_CREATURE"; payload: string }
+  | { type: "CLEAR_ALL_CREATURES" }
   | { type: "SET_ACTIVE_CREATURE"; payload: string | null }
   // Generic creature actions
   | { type: "SET_WALKING"; payload: { id: string; value: boolean } }
@@ -189,6 +190,12 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         ...state,
         creatures: state.creatures.filter((creature) => creature.id !== action.payload),
         activeCreatureId: state.activeCreatureId === action.payload ? null : state.activeCreatureId,
+      }
+    case "CLEAR_ALL_CREATURES":
+      return {
+        ...state,
+        creatures: [],
+        activeCreatureId: null,
       }
     case "SET_ACTIVE_CREATURE":
       return {

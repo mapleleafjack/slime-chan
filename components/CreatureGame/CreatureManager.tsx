@@ -4,16 +4,24 @@ import type React from "react"
 
 import { useEffect, useRef } from "react"
 import { useCreature, createInitialSlime, createInitialMushroom } from "@/context/creatureContext"
+import { useAuth } from "@/context/authContext"
 import { isSlime, isMushroom } from "@/types/creatureTypes"
 import Slime from "./creatures/Slime"
 import Mushroom from "./creatures/Mushroom"
 import CreatureLogicWrapper from "./CreatureLogicWrapper"
 import { randomInt } from "@/utils/gameUtils"
 
-const CreatureManager = () => {
+type CreatureManagerProps = {
+  hasLoadedGame: boolean
+  isLoadingGame: boolean
+}
+
+const CreatureManager: React.FC<CreatureManagerProps> = ({ hasLoadedGame, isLoadingGame }) => {
   const { state, dispatch } = useCreature()
+  const { isAuthenticated } = useAuth()
   const addButtonClickedRef = useRef(false)
   const addButtonTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasInitializedRef = useRef(false)
 
   // Add a new slime with a random position
   const addSlime = (isInitial = false) => {
@@ -60,26 +68,50 @@ const CreatureManager = () => {
     })
   }
 
-  // Add initial slime if none exist
+  // Add initial slime if none exist (only for new users or if not loading saved data)
   useEffect(() => {
-    const slimeCount = state.creatures.filter((c) => isSlime(c)).length
-    if (slimeCount === 0) {
-      addSlime(true) // Pass true to indicate this is the initial slime
+    // Don't initialize while loading game data
+    if (isLoadingGame) {
+      console.log("Waiting for game data to load...")
+      return
     }
 
-    // Add a mushroom if none exist
-    const mushroomCount = state.creatures.filter((c) => isMushroom(c)).length
-    if (mushroomCount === 0) {
-      addMushroom()
+    // Don't initialize if we've already loaded saved data
+    if (hasLoadedGame && hasInitializedRef.current) {
+      console.log("Game already loaded and initialized")
+      return
     }
+
+    // Wait for auth and potential data load to settle
+    const timeoutId = setTimeout(() => {
+      if (hasInitializedRef.current) return
+      
+      const slimeCount = state.creatures.filter((c) => isSlime(c)).length
+      const mushroomCount = state.creatures.filter((c) => isMushroom(c)).length
+      
+      // Only add default creatures if we have none at all
+      // This means either new user or no saved data
+      if (slimeCount === 0) {
+        console.log("No slimes found, adding default slime")
+        addSlime(true)
+      }
+
+      if (mushroomCount === 0) {
+        console.log("No mushrooms found, adding default mushroom")
+        addMushroom()
+      }
+      
+      hasInitializedRef.current = true
+    }, 300) // Reduced timeout since we now have proper loading state
 
     // Clean up timeout on unmount
     return () => {
+      clearTimeout(timeoutId)
       if (addButtonTimeoutRef.current) {
         clearTimeout(addButtonTimeoutRef.current)
       }
     }
-  }, [state.creatures.length])
+  }, [hasLoadedGame, isLoadingGame]) // Re-run when loading state changes
 
   const handleAddButtonClick = (e: React.MouseEvent) => {
     // Prevent event bubbling
