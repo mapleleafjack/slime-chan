@@ -4,14 +4,74 @@ import type React from "react"
 import { useEffect, useRef } from "react"
 import CreatureSprite from "../CreatureSprite"
 import { useCreature } from "@/context/creatureContext"
-import { isSlime, type SlimeData, type CreatureData } from "@/types/creatureTypes"
+import { isSlime, type SlimeData, type CreatureData, type SlimeColor } from "@/types/creatureTypes"
 import { ANIMATION_CONFIG } from "../animationConfig"
 import { getRandomPhrase } from "@/utils/gameUtils"
 import { useBaseCreature, RenderCreature, type MenuHandlers } from "./BaseCreature"
 import { SLIME_CREATURE_CONFIG } from "../creatureConfig"
+import { GenericCreatureMenu, type CreatureMenuConfig } from "../menuConfig"
 
 interface SlimeProps {
   id: string
+}
+
+/**
+ * Create menu configuration for a slime instance
+ */
+const createSlimeMenuConfig = (
+  id: string,
+  creature: SlimeData,
+  dispatch: any,
+  handlers: MenuHandlers,
+  allCreatures: CreatureData[]
+): CreatureMenuConfig => {
+  const sameTypeCount = allCreatures.filter((c) => c.creatureType === "slime").length
+
+  return {
+    mainActions: [
+      // Color buttons - show all three colors directly
+      {
+        id: "color-blue",
+        icon: "🔵",
+        title: "Blue",
+        onClick: (e) => {
+          e.stopPropagation()
+          dispatch({ type: "SET_SLIME_COLOR", payload: { id, color: "blue" as SlimeColor } })
+        },
+        isVisible: creature.capabilities.canChangeColor,
+      },
+      {
+        id: "color-red",
+        icon: "🔴",
+        title: "Red",
+        onClick: (e) => {
+          e.stopPropagation()
+          dispatch({ type: "SET_SLIME_COLOR", payload: { id, color: "red" as SlimeColor } })
+        },
+        isVisible: creature.capabilities.canChangeColor,
+      },
+      {
+        id: "color-green",
+        icon: "🟢",
+        title: "Green",
+        onClick: (e) => {
+          e.stopPropagation()
+          dispatch({ type: "SET_SLIME_COLOR", payload: { id, color: "green" as SlimeColor } })
+        },
+        isVisible: creature.capabilities.canChangeColor,
+      },
+      {
+        id: "remove",
+        icon: "❌",
+        title: "Remove",
+        onClick: (e) => {
+          handlers.handleRemove(e)
+        },
+        isVisible: sameTypeCount > 1,
+      },
+    ],
+    subMenus: {},
+  }
 }
 
 const Slime: React.FC<SlimeProps> = ({ id }) => {
@@ -83,7 +143,14 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     },
     renderMenu: (creature: CreatureData, handlers: MenuHandlers) => {
       if (!isSlime(creature)) return null
-      return <SlimeMenu slime={creature} id={id} handlers={handlers} />
+      const menuConfig = createSlimeMenuConfig(id, creature, baseCreature.dispatch, handlers, baseCreature.state.creatures)
+      return (
+        <GenericCreatureMenu
+          config={menuConfig}
+          currentMenuState={creature.bubble.menuState}
+          onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
+        />
+      )
     },
   })
 
@@ -221,7 +288,14 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
 
   const renderMenu = (c: CreatureData, handlers: MenuHandlers) => {
     if (!isSlime(c)) return null
-    return <SlimeMenu slime={c} id={id} handlers={handlers} />
+    const menuConfig = createSlimeMenuConfig(id, c, baseCreature.dispatch, handlers, baseCreature.state.creatures)
+    return (
+      <GenericCreatureMenu
+        config={menuConfig}
+        currentMenuState={c.bubble.menuState}
+        onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
+      />
+    )
   }
 
   return (
@@ -233,63 +307,6 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
       getCurrentImage={getCurrentImage}
       getCurrentFrame={getCurrentFrame}
     />
-  )
-}
-
-// Slime Menu Component
-const SlimeMenu: React.FC<{
-  slime: SlimeData
-  id: string
-  handlers: MenuHandlers
-}> = ({ slime, id, handlers }) => {
-  const { state, dispatch } = useCreature()
-
-  const handleColorMenu = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    dispatch({ type: "SET_MENU_STATE", payload: { id, state: "color" } })
-  }
-
-  const handleBackToMainMenu = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })
-  }
-
-  const changeColor = (color: "blue" | "red" | "green", e: React.MouseEvent) => {
-    e.stopPropagation()
-    dispatch({ type: "SET_SLIME_COLOR", payload: { id, color } })
-    dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })
-  }
-
-  if (slime.bubble.menuState === "color") {
-    return (
-      <div className="color-menu horizontal">
-        <div className="color-option blue" onClick={(e) => changeColor("blue", e)}>
-          青
-        </div>
-        <div className="color-option red" onClick={(e) => changeColor("red", e)}>
-          赤
-        </div>
-        <div className="color-option green" onClick={(e) => changeColor("green", e)}>
-          緑
-        </div>
-        <button className="back-button" onClick={handleBackToMainMenu}>
-          ↩️
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="slime-menu">
-      <button className="slime-menu-btn color" onClick={handleColorMenu} title="Change Color">
-        🎨
-      </button>
-      {state.creatures.filter((c) => isSlime(c)).length > 1 && (
-        <button className="slime-menu-btn remove" onClick={handlers.handleRemove} title="Remove">
-          ❌
-        </button>
-      )}
-    </div>
   )
 }
 

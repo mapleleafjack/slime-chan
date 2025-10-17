@@ -7,11 +7,63 @@ import { isMushroom, type MushroomData, type CreatureData } from "@/types/creatu
 import { DayPhase } from "@/utils/gameUtils"
 import { useBaseCreature, RenderCreature, type MenuHandlers } from "./BaseCreature"
 import { MUSHROOM_CREATURE_CONFIG } from "../creatureConfig"
+import { GenericCreatureMenu, type CreatureMenuConfig } from "../menuConfig"
 
 const MUSHROOM_GLOW_DURATION = 1000
 
 interface MushroomProps {
   id: string
+}
+
+/**
+ * Create menu configuration for a mushroom instance
+ */
+const createMushroomMenuConfig = (
+  id: string,
+  creature: MushroomData,
+  dispatch: any,
+  handlers: MenuHandlers,
+  allCreatures: CreatureData[]
+): CreatureMenuConfig => {
+  const sameTypeCount = allCreatures.filter((c) => c.creatureType === "mushroom").length
+
+  return {
+    mainActions: [
+      {
+        id: "glow",
+        icon: "✨",
+        title: "Toggle Glow",
+        onClick: (e) => {
+          e.stopPropagation()
+          const newGlowState = !creature.isGlowing
+          dispatch({ type: "SET_GLOWING", payload: { id, value: newGlowState } })
+          dispatch({ type: "SET_GLOW_INTENSITY", payload: { id, value: newGlowState ? 1 : 0 } })
+          
+          // Show feedback bubble
+          dispatch({ 
+            type: "SHOW_BUBBLE", 
+            payload: { id, text: newGlowState ? "✨ *glowing*" : "*glow fades*" } 
+          })
+          
+          // Hide bubble after 2 seconds
+          setTimeout(() => {
+            dispatch({ type: "HIDE_BUBBLE", payload: id })
+          }, 2000)
+        },
+        isVisible: creature.capabilities.canGlow,
+      },
+      {
+        id: "remove",
+        icon: "❌",
+        title: "Remove",
+        onClick: (e) => {
+          handlers.handleRemove(e)
+        },
+        isVisible: sameTypeCount > 1,
+      },
+    ],
+    subMenus: {},
+  }
 }
 
 const Mushroom: React.FC<MushroomProps> = ({ id }) => {
@@ -95,7 +147,14 @@ const Mushroom: React.FC<MushroomProps> = ({ id }) => {
     },
     renderMenu: (creature: CreatureData, handlers: MenuHandlers) => {
       if (!isMushroom(creature)) return null
-      return <MushroomMenu mushroom={creature} id={id} handlers={handlers} />
+      const menuConfig = createMushroomMenuConfig(id, creature, baseCreature.dispatch, handlers, baseCreature.state.creatures)
+      return (
+        <GenericCreatureMenu
+          config={menuConfig}
+          currentMenuState={creature.bubble.menuState}
+          onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
+        />
+      )
     },
   })
 
@@ -157,7 +216,14 @@ const Mushroom: React.FC<MushroomProps> = ({ id }) => {
 
   const renderMenu = (c: CreatureData, handlers: MenuHandlers) => {
     if (!isMushroom(c)) return null
-    return <MushroomMenu mushroom={c} id={id} handlers={handlers} />
+    const menuConfig = createMushroomMenuConfig(id, c, baseCreature.dispatch, handlers, baseCreature.state.creatures)
+    return (
+      <GenericCreatureMenu
+        config={menuConfig}
+        currentMenuState={c.bubble.menuState}
+        onBackToMain={() => baseCreature.dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })}
+      />
+    )
   }
 
   return (
@@ -169,25 +235,6 @@ const Mushroom: React.FC<MushroomProps> = ({ id }) => {
       getCurrentImage={getCurrentImage}
       getCurrentFrame={getCurrentFrame}
     />
-  )
-}
-
-// Mushroom Menu Component
-const MushroomMenu: React.FC<{
-  mushroom: MushroomData
-  id: string
-  handlers: MenuHandlers
-}> = ({ mushroom, id, handlers }) => {
-  const { state } = useCreature()
-
-  return (
-    <div className="slime-menu">
-      {state.creatures.filter((c) => isMushroom(c)).length > 1 && (
-        <button className="slime-menu-btn remove" onClick={handlers.handleRemove} title="Remove">
-          ❌
-        </button>
-      )}
-    </div>
   )
 }
 
