@@ -8,12 +8,16 @@ export type SlimeColor = "blue" | "red" | "green"
 export type Direction = 1 | -1
 export type Behavior = "walkLeft" | "walkRight" | "jump" | "sleep" | "talk" | "idle"
 export type Mode = "user" | "auto"
-export type MenuState = "main" | "color" | "none"
+export type MenuState = "main" | "color" | "chat" | "none"
 
-// Update the SlimeData type to include showMenu flag
+// Personality traits for slimes
+export type Personality = "playful" | "shy" | "energetic" | "calm" | "curious" | "sleepy"
+
+// Update the SlimeData type to include showMenu flag and personality
 export type SlimeData = {
   id: string
   color: SlimeColor
+  personality: Personality
   isWalking: boolean
   isJumping: boolean
   isSleeping: boolean
@@ -39,6 +43,7 @@ type SlimeAction =
   | { type: "REMOVE_SLIME"; payload: string }
   | { type: "SET_ACTIVE_SLIME"; payload: string | null }
   | { type: "SET_SLIME_COLOR"; payload: { id: string; color: SlimeColor } }
+  | { type: "SET_PERSONALITY"; payload: { id: string; personality: Personality } }
   | { type: "SET_WALKING"; payload: { id: string; value: boolean } }
   | { type: "SET_JUMPING"; payload: { id: string; value: boolean } }
   | { type: "SET_SLEEPING"; payload: { id: string; value: boolean } }
@@ -82,10 +87,17 @@ export const SlimeProvider: React.FC<SlimeProviderProps> = ({ children }) => {
   return <SlimeContext.Provider value={{ state, dispatch }}>{children}</SlimeContext.Provider>
 }
 
+// Helper function to get a random personality
+const getRandomPersonality = (): Personality => {
+  const personalities: Personality[] = ["playful", "shy", "energetic", "calm", "curious", "sleepy"]
+  return personalities[Math.floor(Math.random() * personalities.length)]
+}
+
 // Update the initial state for a slime
 const createInitialSlime = (id: string, color: SlimeColor, position: number): SlimeData => ({
   id,
   color,
+  personality: getRandomPersonality(),
   isWalking: false,
   isJumping: false,
   isSleeping: false,
@@ -131,6 +143,13 @@ const slimeReducer = (state: SlimeState, action: SlimeAction): SlimeState => {
         ...state,
         slimes: state.slimes.map((slime) =>
           slime.id === action.payload.id ? { ...slime, color: action.payload.color } : slime,
+        ),
+      }
+    case "SET_PERSONALITY":
+      return {
+        ...state,
+        slimes: state.slimes.map((slime) =>
+          slime.id === action.payload.id ? { ...slime, personality: action.payload.personality } : slime,
         ),
       }
     case "SET_WALKING":
@@ -298,7 +317,7 @@ const slimeReducer = (state: SlimeState, action: SlimeAction): SlimeState => {
             bubble: {
               ...slime.bubble,
               visible: true,
-              menuState: action.payload.state,
+              menuState: action.payload.state as MenuState,
               // Clear text when showing menu
               text: action.payload.state !== "none" ? "" : slime.bubble.text,
             },
@@ -310,7 +329,7 @@ const slimeReducer = (state: SlimeState, action: SlimeAction): SlimeState => {
             bubble: {
               ...slime.bubble,
               visible: false,
-              menuState: "none",
+              menuState: "none" as MenuState,
             },
           }
         }

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import SlimeSprite from "./SlimeSprite"
 import { useSlime } from "@/context/slimeContext"
 import { useSlimeAI } from "@/hooks/useSlimeAI"
+import { useAIConfig } from "@/context/aiConfigContext"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { ANIMATION_CONFIG } from "./animationConfig"
 import { DayPhase } from "@/utils/slimeUtils"
@@ -19,6 +20,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   const { state, dispatch } = useSlime()
   const { currentPhase } = useDayCycle()
   const { handleUserMessage } = useSlimeAI(id)
+  const { isConfigured } = useAIConfig()
   const [isHovered, setIsHovered] = useState(false)
   const slimeRef = useRef<HTMLDivElement>(null)
 
@@ -43,6 +45,17 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     // Stop event propagation to prevent deselection
     e.stopPropagation()
 
+    // If clicking on already active slime, toggle menu/chat
+    if (isActive) {
+      // Toggle between menu and greeting
+      if (slime.bubble.menuState === "main") {
+        dispatch({ type: "HIDE_ALL_BUBBLES", payload: undefined })
+      } else {
+        dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })
+      }
+      return
+    }
+
     // Hide all bubbles first
     dispatch({ type: "HIDE_ALL_BUBBLES", payload: undefined })
 
@@ -56,17 +69,18 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     dispatch({ type: "SET_SLEEPING", payload: { id, value: false } })
     dispatch({ type: "SET_MODE", payload: { id, value: "user" } })
 
-    // Show a random phrase instead of menu if already showing the menu
-    if (slime.bubble.menuState === "main") {
-      dispatch({ type: "SHOW_BUBBLE", payload: { id, text: getRandomPhrase() } })
-    } else {
-      dispatch({ type: "SET_MENU_STATE", payload: { id, state: "main" } })
-    }
+    // Show greeting
+    dispatch({ type: "SHOW_BUBBLE", payload: { id, text: getRandomPhrase() } })
   }
 
   const handleColorMenu = (e: React.MouseEvent) => {
     e.stopPropagation()
     dispatch({ type: "SET_MENU_STATE", payload: { id, state: "color" } })
+  }
+
+  const handleChatMenu = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    dispatch({ type: "SET_MENU_STATE", payload: { id, state: "chat" } })
   }
 
   const handleBackToMainMenu = (e: React.MouseEvent) => {
@@ -93,9 +107,24 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   const handleKeyDownRefCallback = useRef<(e: KeyboardEvent) => void | null>(null)
   const handleKeyUpRefCallback = useRef<(e: KeyboardEvent) => void | null>(null)
 
-  // Keyboard controls
+  // Track chat active state
+  const [chatActive, setChatActive] = useState(false)
+
+  useEffect(() => {
+    const handleChatActive = (e: Event) => {
+      // @ts-ignore
+      setChatActive(e.detail?.active ?? false)
+    }
+    window.addEventListener("slime-chat-active", handleChatActive)
+    return () => window.removeEventListener("slime-chat-active", handleChatActive)
+  }, [])
+
+  // Keyboard controls (only work when slime is selected and chat is NOT active)
   useEffect(() => {
     handleKeyDownRef.current = (e: KeyboardEvent) => {
+      // Only handle keyboard controls for the selected slime and when chat is not active
+      if (state.activeSlimeId !== id || chatActive) return
+
       dispatch({ type: "SET_LAST_INTERACTION", payload: { id, value: Date.now() } })
       dispatch({ type: "SET_MODE", payload: { id, value: "user" } })
 
@@ -119,25 +148,28 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
     }
 
     handleKeyUpRef.current = (e: KeyboardEvent) => {
+      // Only handle keyboard controls for the selected slime and when chat is not active
+      if (state.activeSlimeId !== id || chatActive) return
+
       if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
         dispatch({ type: "SET_WALKING", payload: { id, value: false } })
       }
     }
-  }, [dispatch, id, slime.isJumping])
+  }, [dispatch, id, slime.isJumping, state.activeSlimeId, chatActive])
 
   useEffect(() => {
     handleKeyDownRefCallback.current = (e: KeyboardEvent) => {
-      if (state.activeSlimeId === id && handleKeyDownRef.current) {
+      if (handleKeyDownRef.current) {
         handleKeyDownRef.current(e)
       }
     }
 
     handleKeyUpRefCallback.current = (e: KeyboardEvent) => {
-      if (state.activeSlimeId === id && handleKeyUpRef.current) {
+      if (handleKeyUpRef.current) {
         handleKeyUpRef.current(e)
       }
     }
-  }, [state.activeSlimeId, id])
+  }, [])
 
   useEffect(() => {
     const handleKeyDownWrapper = (e: KeyboardEvent) => {
@@ -280,6 +312,11 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
           <div className="bubble">
             {slime.bubble.menuState === "main" ? (
               <div className="slime-menu">
+                {isConfigured && (
+                  <button className="slime-menu-btn chat" onClick={handleChatMenu} title="Chat with AI">
+                    💬
+                  </button>
+                )}
                 <button className="slime-menu-btn color" onClick={handleColorMenu} title="Change Color">
                   🎨
                 </button>
@@ -304,6 +341,8 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
                   ↩️
                 </button>
               </div>
+            ) : slime.bubble.menuState === "chat" ? (
+              slime.bubble.text
             ) : (
               slime.bubble.text
             )}

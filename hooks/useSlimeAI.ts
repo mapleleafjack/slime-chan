@@ -2,11 +2,13 @@
 
 import { useEffect, useCallback, useRef, useState } from "react"
 import { useSlime } from "@/context/slimeContext"
-import { getRandomJapanesePhrase } from "@/utils/slimeUtils"
+import { useAIConfig } from "@/context/aiConfigContext"
+import { generateSlimeResponse, generateAutonomousSpeech, getFallbackResponse } from "@/utils/aiService"
 
 export const useSlimeAI = (slimeId: string) => {
   const { state, dispatch } = useSlime()
   const slime = state.slimes.find((s) => s.id === slimeId)
+  const { config, isConfigured } = useAIConfig()
   const [isProcessing, setIsProcessing] = useState(false)
 
   const slimeRef = useRef(slime)
@@ -56,11 +58,30 @@ export const useSlimeAI = (slimeId: string) => {
         // Check if component is still mounted
         if (!isMountedRef.current) return
 
-        // Generate a random Japanese phrase
-        const response = getRandomJapanesePhrase()
+        let responseText: string
+
+        // Try to use AI if configured, otherwise fall back to random phrases
+        if (isConfigured) {
+          console.log(`🤖 Using AI to respond to: "${message}"`)
+          const aiResponse = await generateSlimeResponse(config, currentSlime, message, currentSlime.personality)
+
+          if (aiResponse.success) {
+            console.log(`✓ AI response: "${aiResponse.message}"`)
+            responseText = aiResponse.message
+          } else {
+            // Log error but don't show to user, fall back to random phrase
+            console.warn("⚠️ AI response failed:", aiResponse.error)
+            console.log("↻ Using fallback response")
+            responseText = getFallbackResponse()
+          }
+        } else {
+          // Use fallback when AI is not configured
+          console.log("ℹ️ AI not configured, using fallback response")
+          responseText = getFallbackResponse()
+        }
 
         // Update bubble and keep in user mode
-        dispatch({ type: "UPDATE_BUBBLE_TEXT", payload: { id: slimeId, text: response } })
+        dispatch({ type: "UPDATE_BUBBLE_TEXT", payload: { id: slimeId, text: responseText } })
         dispatch({ type: "SET_LAST_INTERACTION", payload: { id: slimeId, value: Date.now() } })
 
         // Clear any existing timeout
@@ -68,7 +89,7 @@ export const useSlimeAI = (slimeId: string) => {
           clearTimeout(timeoutRef.current)
         }
 
-        // Auto-hide after 5 seconds if menu is not open
+        // Auto-hide after 8 seconds if menu is not open (longer for AI responses)
         timeoutRef.current = setTimeout(() => {
           if (!isMountedRef.current) return
 
@@ -77,7 +98,7 @@ export const useSlimeAI = (slimeId: string) => {
             dispatch({ type: "HIDE_BUBBLE", payload: slimeId })
           }
           timeoutRef.current = null
-        }, 5000)
+        }, 8000)
       } finally {
         if (isMountedRef.current) {
           dispatch({ type: "SET_THINKING", payload: { id: slimeId, value: false } })
@@ -85,7 +106,7 @@ export const useSlimeAI = (slimeId: string) => {
         }
       }
     },
-    [dispatch, slimeId, state.slimes, isProcessing],
+    [dispatch, slimeId, state.slimes, isProcessing, config, isConfigured],
   )
 
   // Auto-interaction when in talk mode
@@ -94,9 +115,31 @@ export const useSlimeAI = (slimeId: string) => {
     if (slime && state.activeSlimeId === slimeId) return
 
     if (slime && slime.currentBehavior === "talk" && !slime.isThinking && !isProcessing) {
-      handleUserMessage("Say something playful!")
+      // Use autonomous speech for better context-aware responses
+      const generateAutonomous = async () => {
+        if (!slime || slime.isThinking || isProcessing) return
+        
+        setIsProcessing(true)
+        dispatch({ type: "SHOW_BUBBLE", payload: { id: slimeId, text: "..." } })
+        dispatch({ type: "SET_THINKING", payload: { id: slimeId, value: true } })
+
+        let responseText: string
+
+        if (isConfigured) {
+          const aiResponse = await generateAutonomousSpeech(config, slime, slime.personality)
+          responseText = aiResponse.success ? aiResponse.message : getFallbackResponse()
+        } else {
+          responseText = getFallbackResponse()
+        }
+
+        dispatch({ type: "UPDATE_BUBBLE_TEXT", payload: { id: slimeId, text: responseText } })
+        dispatch({ type: "SET_THINKING", payload: { id: slimeId, value: false } })
+        setIsProcessing(false)
+      }
+
+      generateAutonomous()
     }
-  }, [slime?.currentBehavior, handleUserMessage, slime, isProcessing, state.activeSlimeId, slimeId])
+  }, [slime?.currentBehavior, slime, isProcessing, state.activeSlimeId, slimeId, config, isConfigured, dispatch])
 
   return { handleUserMessage }
 }

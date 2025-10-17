@@ -10,6 +10,7 @@ import NightSparkles from "./NightSparkles"
 import SlimeManager from "./SlimeManager"
 import SunnyOverlay from "./SunnyOverlay"
 import Mushroom from "./Mushroom"
+import ChatInput from "./ChatInput"
 import { useDayCycle } from "@/context/dayCycleContext"
 import { calculateWeather, getWeatherDuration, Weather } from "@/utils/weatherUtils"
 import { DayPhase } from "@/utils/slimeUtils"
@@ -87,6 +88,7 @@ const SlimeGameContent = () => {
         <MainMenu />
         <MainWidget currentDateTime={currentDateTime} />
         <SlimeManager />
+        <ChatInput />
       </div>
     </div>
   )
