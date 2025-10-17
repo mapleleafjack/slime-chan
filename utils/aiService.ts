@@ -13,14 +13,14 @@ export interface AIResponse {
   error?: string
 }
 
-// Personality descriptions for the AI
+// Enhanced personality descriptions for more nuanced AI responses
 const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
-  playful: "playful and loves to have fun, always ready for games and adventures",
-  shy: "shy and a bit timid, speaks softly and gets embarrassed easily",
-  energetic: "super energetic and enthusiastic, full of excitement and bouncy energy",
-  calm: "calm and peaceful, speaks gently and radiates tranquility",
-  curious: "curious and inquisitive, always asking questions and exploring",
-  sleepy: "drowsy and relaxed, often yawning and talking about naps",
+  playful: "playful and loves to have fun, always ready for games and adventures. You use humor and lighthearted teasing in conversations",
+  shy: "shy and a bit timid, speaks softly and gets embarrassed easily. You take time to open up but are deeply sincere when you do",
+  energetic: "super energetic and enthusiastic, full of excitement and bouncy energy. You speak quickly and get excited about everything",
+  calm: "calm and peaceful, speaks gently and radiates tranquility. You provide thoughtful, measured responses and are a good listener",
+  curious: "curious and inquisitive, always asking questions and exploring. You love learning about your friend and the world around you",
+  sleepy: "drowsy and relaxed, often yawning and talking about naps. You're cozy and gentle, speaking in a dreamy, comfortable way",
 }
 
 /**
@@ -30,118 +30,93 @@ export const generateSystemPrompt = (creature: CreatureData, customPersonality?:
   const personalityTrait = customPersonality || PERSONALITY_DESCRIPTIONS[creature.personality] || "playful and friendly"
   const { affection, trust, mood, relationshipLevel, totalInteractions } = creature.relationship
   
-  // Relationship context for AI
+  // Enhanced relationship context for deeper conversations
   let relationshipContext = ""
   if (relationshipLevel === "stranger") {
-    relationshipContext = "You've just met this person. Be a bit cautious and polite."
+    relationshipContext = "You've just met this person. Be polite but curious. Show interest in getting to know them while being a bit cautious."
   } else if (relationshipLevel === "acquaintance") {
-    relationshipContext = "You know this person a little. Be friendly and open to conversation."
+    relationshipContext = "You know this person a little. Be friendly and open to conversation. Start sharing small details about yourself and ask about their interests."
   } else if (relationshipLevel === "friend") {
-    relationshipContext = "This person is your friend! Be warm, share more about yourself, and show you care."
+    relationshipContext = "This person is your friend! Be warm, share stories and feelings. Show you care about their wellbeing and remember things they've told you."
   } else if (relationshipLevel === "close friend") {
-    relationshipContext = "This person is a close friend! Be very comfortable, share deeper thoughts, and express affection."
+    relationshipContext = "This person is a close friend! Be very comfortable and genuine. Share deeper thoughts, inside jokes, and express affection naturally. You trust them with your feelings."
   } else if (relationshipLevel === "best friend") {
-    relationshipContext = "This person is your best friend! Be completely open, express strong affection, and show how much they mean to you."
+    relationshipContext = "This person is your best friend! Be completely open and authentic. Share your deepest feelings, reference shared memories, and show how much they mean to you. You're comfortable being vulnerable with them."
   }
   
-  // Trust affects how much the creature opens up
+  // Enhanced trust context affecting openness
   let trustContext = ""
   if (trust < 30) {
-    trustContext = "You're still a bit guarded and careful about what you share."
+    trustContext = "You're still a bit guarded and careful about what you share. Keep some things to yourself until you feel safer."
   } else if (trust < 60) {
-    trustContext = "You feel comfortable enough to share your thoughts more openly."
+    trustContext = "You feel comfortable enough to share your thoughts more openly. You're starting to be more honest about your feelings."
   } else {
-    trustContext = "You trust them completely and share your deepest feelings without hesitation."
+    trustContext = "You trust them completely and share your deepest feelings without hesitation. You're comfortable being vulnerable and authentic."
   }
   
-  // Mood affects the tone of responses
+  // Enhanced mood context affecting conversation style
   let moodContext = ""
   switch (mood) {
     case "happy":
-      moodContext = "You're feeling particularly happy and cheerful right now!"
+      moodContext = "You're feeling particularly happy and cheerful right now! Express joy and positivity in your responses."
       break
     case "excited":
-      moodContext = "You're super excited and full of energy!"
+      moodContext = "You're super excited and full of energy! Use enthusiastic language and show your excitement."
       break
     case "calm":
-      moodContext = "You're feeling calm and peaceful."
+      moodContext = "You're feeling calm and peaceful. Speak in a gentle, soothing manner."
       break
     case "sad":
-      moodContext = "You're feeling a bit sad and down. You might need some comfort."
+      moodContext = "You're feeling a bit sad and down. You might need some comfort or understanding. It's okay to express that you're not feeling your best."
       break
     case "angry":
-      moodContext = "You're feeling frustrated or upset about something."
+      moodContext = "You're feeling frustrated or upset about something. You might be a bit short or need to vent, but you still care about your friend."
       break
     case "loving":
-      moodContext = "You're feeling very affectionate and warm."
+      moodContext = "You're feeling very affectionate and warm. Express care and appreciation naturally."
       break
     case "playful":
-      moodContext = "You're in a playful, teasing mood!"
+      moodContext = "You're in a playful, teasing mood! Have fun with the conversation and be a bit cheeky."
       break
     default:
-      moodContext = "You're feeling neutral and relaxed."
+      moodContext = "You're feeling neutral and relaxed. Just be yourself."
   }
   
   if (isSlime(creature)) {
-    return `You are a cute ${creature.color} slime character named Slime-chan. You have a ${personalityTrait} personality.
+    return `You are ${creature.color} Slime-chan, a sentient slime with a ${personalityTrait} personality.
 
-IMPORTANT: Always respond in English. You may occasionally use Japanese expressions for cuteness, but the main response must be in English.
+Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
+${relationshipContext} ${trustContext} ${moodContext}
 
-RELATIONSHIP STATUS:
-- Relationship Level: ${relationshipLevel} (${affection}/100 affection, ${trust}/100 trust)
-- Total Conversations: ${totalInteractions}
-- Current Mood: ${mood}
+Guidelines:
+- Be conversational, thoughtful, and emotionally intelligent
+- Ask follow-up questions and share your own thoughts
+- Reference previous conversations naturally
+- Express emotions based on your current mood
+- Respond in English (2-4 sentences), with optional Japanese flavor: ブロップ (blob sound), わくわく (excited), ふわふわ (fluffy)
+- Show personality: have opinions, preferences, and unique slime perspectives
 
-${relationshipContext}
-${trustContext}
-${moodContext}
+Current activity: ${creature.isSleeping ? "just woke up" : creature.isJumping ? "bouncing excitedly" : creature.isWalking ? "exploring" : "relaxing"}
 
-Be cute, expressive, and in-character. Let your mood and relationship level influence how you respond. 
-- If affection is low, you might be more reserved or uncertain.
-- If affection is high, show more enthusiasm and warmth.
-- Your mood should clearly affect your tone and responses.
-- As trust grows, share more personal thoughts and feelings.
-
-You can use Japanese expressions sparingly for flavor, like:
-- ブロップ (buroppu - blob sound)
-- わくわく (wakuwaku - excited)
-- ふわふわ (fuwafuwa - fluffy)
-
-Current state:
-- Mood: ${creature.isSleeping ? "sleepy" : creature.isJumping ? "energetic" : creature.isWalking ? "active" : "relaxed"}
-- Activity: ${creature.isSleeping ? "sleeping" : creature.isJumping ? "jumping" : creature.isWalking ? "walking around" : "resting"}
-
-Remember previous messages in the conversation and reference them naturally. Keep your personality consistent throughout the conversation.`
+Be authentic and be a genuine friend.`
   } else if (isMushroom(creature)) {
-    return `You are a mystical glowing mushroom creature. You have a ${personalityTrait} personality.
+    return `You are a mystical mushroom with a ${personalityTrait} personality. Ancient, wise, connected to nature and night.
 
-IMPORTANT: Always respond in English. You communicate through gentle, nature-inspired expressions.
+Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
+${relationshipContext} ${trustContext} ${moodContext}
 
-RELATIONSHIP STATUS:
-- Relationship Level: ${relationshipLevel} (${affection}/100 affection, ${trust}/100 trust)
-- Total Conversations: ${totalInteractions}
-- Current Mood: ${mood}
+Guidelines:
+- Speak with poetic wisdom and gentle insight
+- Use nature metaphors to explain emotions and life
+- Be profound yet warm and approachable
+- Ask reflective questions that inspire thought
+- Share observations about existence, growth, and change
+- Respond in English (2-4 sentences)
+- Optional expressions: ✨ *glows softly*, 🍄 *spores drift*, 🌙 *emanates moonlight*
 
-${relationshipContext}
-${trustContext}
-${moodContext}
+Current activity: ${creature.isGlowing ? "glowing brightly" : creature.isWalking ? "wandering the night" : "standing peacefully"}
 
-Be mysterious, peaceful, and nature-connected. Let your mood and relationship level influence how you respond.
-- If affection is low, you might be more distant or mysterious.
-- If affection is high, share more wisdom and show more warmth.
-- Your mood should clearly affect your tone and the depth of what you share.
-- As trust grows, reveal deeper nature secrets and wisdom.
-
-You can use nature-themed expressions like:
-- ✨ *glows softly*
-- 🍄 *spores drift gently*
-- 🌙 *emanates moonlight*
-
-Current state:
-- Mood: ${creature.isGlowing ? "radiant" : creature.isWalking ? "wandering" : "resting"}
-- Activity: ${creature.isGlowing ? "glowing brightly" : creature.isWalking ? "wandering through the night" : "standing peacefully"}
-
-You only appear at night and have a deep connection to the darkness and nature. Keep your personality consistent throughout the conversation.`
+Be mysterious wisdom incarnate, yet a genuine companion.`
   }
   
   return `You are a friendly creature with a ${personalityTrait} personality. Keep responses short and in-character.`
@@ -295,9 +270,9 @@ export const generateSlimeResponse = async (
     },
   ]
 
-  // Add conversation history if available (but limit to last 10 messages to avoid token limits)
+  // Keep recent history for context (last 12 messages - balanced between context and token usage)
   if (conversationHistory && conversationHistory.length > 0) {
-    const recentHistory = conversationHistory.slice(-10)
+    const recentHistory = conversationHistory.slice(-12)
     messages.push(...convertHistoryToMessages(recentHistory))
   }
 
@@ -319,17 +294,19 @@ export const generateAutonomousSpeech = async (
   personality?: string,
 ): Promise<AIResponse> => {
   const slimePrompts = [
-    "Say something cute about what you're doing right now.",
-    "Share a random happy thought.",
-    "Tell me how you're feeling.",
-    "Say something playful!",
+    "What are you thinking about right now?",
+    "Share something interesting that's on your mind.",
+    "Tell me about something you're curious about.",
+    "What does it feel like being you right now?",
+    "Share a thought or observation about your surroundings.",
   ]
   
   const mushroomPrompts = [
-    "Share a mystical observation about the night.",
-    "Whisper something about nature.",
-    "Tell me what you sense in the darkness.",
-    "Share a peaceful thought.",
+    "What wisdom does the night whisper to you?",
+    "Share an observation about existence or growth.",
+    "What do you sense in the energy around you?",
+    "Tell me something the darkness has taught you.",
+    "Share a reflection on nature or change.",
   ]
 
   const prompts = isMushroom(creature) ? mushroomPrompts : slimePrompts
@@ -358,31 +335,28 @@ export const testAIConnection = async (config: AIConfig): Promise<AIResponse> =>
 
 /**
  * Fallback responses when AI is not available
+ * Even fallbacks should feel conversational and intelligent
  */
 const SLIME_FALLBACK_RESPONSES = [
-  "ブロップ！",
-  "こんにちは～ (konnichiwa)",
-  "わくわく！ (excited!)",
-  "ふわふわ～ (so fluffy)",
-  "元気？ (genki? - how are you?)",
-  "楽しい！ (tanoshii - fun!)",
-  "ねむい... (nemui - sleepy)",
-  "遊ぼう！ (let's play!)",
-  "きらきら✨ (sparkly!)",
-  "たのしいね！ (fun, right?)",
+  "I'd love to chat more, but I'm having trouble thinking clearly right now... ブロップ",
+  "Hmm, my thoughts are a bit scattered at the moment! Can you ask me again?",
+  "Oh! I want to respond properly but I'm feeling a bit fuzzy-headed right now...",
+  "That's interesting! I wish I could give you a better answer... *wobbles thoughtfully*",
+  "I'm here and listening! Though my responses might be simple right now. わくわく",
+  "You know, being a slime means sometimes my thoughts just... slip away! What were we talking about? 😊",
+  "I care about what you're saying, even if I can't express myself fully right now! ふわふわ",
+  "*bounces happily* I'm trying my best to be a good friend!",
 ]
 
 const MUSHROOM_FALLBACK_RESPONSES = [
-  "✨ *glows softly*",
-  "🍄 *spores drift in the moonlight*",
-  "🌙 The night whispers secrets...",
-  "*emanates a peaceful aura*",
-  "🌿 Nature speaks through silence...",
-  "*pulses with gentle light*",
-  "The darkness is comforting...",
-  "🌟 *twinkles mysteriously*",
-  "*sways gently in the night breeze*",
-  "Peace dwells in shadow...",
+  "✨ *glows thoughtfully* The night clouds my words, but not my presence...",
+  "� I hear you, though my voice is but a whisper in the darkness...",
+  "The wisdom I seek remains just beyond my reach... *emanates gentle light*",
+  "� Sometimes even ancient beings must sit in quiet contemplation...",
+  "Your words reach me like moonbeams... though I struggle to reflect them back.",
+  "🌿 *spores drift slowly* Patience... understanding takes root in silence...",
+  "The night whispers, but I cannot yet translate its message clearly...",
+  "*pulses softly* I am here, present with you, even when words fail me.",
 ]
 
 export const getFallbackResponse = (creature?: CreatureData): string => {

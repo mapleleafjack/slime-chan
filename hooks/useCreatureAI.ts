@@ -61,40 +61,109 @@ export const useCreatureAI = (creatureId: string) => {
         }
         dispatch({ type: "ADD_MESSAGE", payload: { id: creatureId, message: userMessage } })
 
-        // Update relationship properties based on interaction
-        // Simple sentiment analysis based on message content
+        // Enhanced relationship analysis based on interaction
         const lowerMsg = message.toLowerCase()
-        const isPositive = /love|like|great|awesome|wonderful|amazing|good|nice|beautiful|cute|happy|fun|thank/i.test(message)
-        const isNegative = /hate|bad|ugly|boring|dumb|stupid|angry|sad|annoying/i.test(message)
+        
+        // More comprehensive sentiment analysis with different categories
+        const isVeryPositive = /\b(love|adore|amazing|fantastic|best|perfect|incredible)\b/i.test(message)
+        const isPositive = /\b(like|great|awesome|wonderful|good|nice|beautiful|cute|pretty|happy|joy|fun|thank|appreciate|care|sweet|kind|excellent)\b/i.test(message)
+        const isNegative = /\b(hate|dislike|bad|ugly|boring|dumb|stupid|angry|sad|annoying|awful|terrible|worst)\b/i.test(message)
+        
+        // Question types that build different relationship aspects
         const isQuestion = message.includes("?")
-        const isLong = message.length > 50 // Longer messages show more engagement
+        const isDeepQuestion = /\b(why|how do you|what do you think|feel about|opinion|believe|wonder|curious about|understand|mean to you|remember when)\b/i.test(message)
+        const isPersonalQuestion = /\b(you|your) (feel|think|like|want|dream|hope|fear|remember|favorite|prefer)\b/i.test(lowerMsg)
+        
+        // Engagement indicators
+        const isLong = message.length > 50
+        const isVeryLong = message.length > 150
+        const hasEmotionalSharing = /\b(i feel|i'm|i am|i think|honestly|actually|my)\b/i.test(lowerMsg)
+        const isComforting = /\b(okay|fine|here for you|sorry|understand|care about you|it'll be|don't worry)\b/i.test(lowerMsg)
+        const isPlayful = /\b(haha|lol|hehe|😂|😄|play|fun|game|joke)\b/i.test(lowerMsg)
+        const isEncouraging = /\b(you can|believe in you|proud|great job|well done|amazing work|keep going)\b/i.test(lowerMsg)
+        
+        // Get current relationship for context-aware updates
+        const currentRelationship = currentCreature.relationship
 
-        // Update affection
-        if (isPositive) {
+        // VERY POSITIVE interactions - major affection boost
+        if (isVeryPositive) {
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 5 } })
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 3 } })
+          
+          // Set loving mood for very positive feedback
+          const veryHappyMoods: Array<"loving" | "excited"> = ["loving", "loving", "excited"] // Weight toward loving
+          const randomMood = veryHappyMoods[Math.floor(Math.random() * veryHappyMoods.length)]
+          dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: randomMood } })
+        } 
+        // POSITIVE interactions - good affection boost
+        else if (isPositive) {
           dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 3 } })
           dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 2 } })
           
-          // Set mood based on positive interaction
-          const happyMoods: Array<"happy" | "excited" | "loving"> = ["happy", "excited", "loving"]
+          const happyMoods: Array<"happy" | "excited" | "playful"> = ["happy", "excited", "playful"]
           const randomMood = happyMoods[Math.floor(Math.random() * happyMoods.length)]
           dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: randomMood } })
-        } else if (isNegative) {
-          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: -2 } })
-          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: -1 } })
+        } 
+        // NEGATIVE interactions - decrease relationship
+        else if (isNegative) {
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: -3 } })
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: -2 } })
           dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: "sad" } })
-        } else {
-          // Neutral interaction still builds affection slowly
+        } 
+        // NEUTRAL but engaged - small affection gain
+        else {
           dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 1 } })
         }
 
-        // Questions build trust
-        if (isQuestion) {
+        // DEEP/PERSONAL QUESTIONS - major trust builder
+        if (isDeepQuestion || isPersonalQuestion) {
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 4 } })
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 2 } })
+          
+          // Deep questions make the creature feel valued
+          if (currentRelationship.mood !== "loving" && currentRelationship.mood !== "excited") {
+            dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: "happy" } })
+          }
+        } 
+        // SIMPLE QUESTIONS - moderate trust builder
+        else if (isQuestion) {
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 2 } })
+        }
+
+        // EMOTIONAL SHARING - builds deep connection
+        if (hasEmotionalSharing) {
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 3 } })
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 2 } })
+        }
+
+        // MESSAGE LENGTH - shows investment
+        if (isVeryLong) {
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 3 } })
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 2 } })
+        } else if (isLong) {
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 1 } })
           dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 1 } })
         }
 
-        // Long messages show engagement
-        if (isLong) {
-          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 1 } })
+        // COMFORTING when creature is sad - huge relationship boost!
+        if (isComforting && currentRelationship.mood === "sad") {
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 6 } })
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 5 } })
+          dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: "loving" } })
+        }
+
+        // PLAYFUL interactions - fun and bonding
+        if (isPlayful) {
+          dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: "playful" } })
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 2 } })
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 1 } })
+        }
+
+        // ENCOURAGING messages - shows you care
+        if (isEncouraging) {
+          dispatch({ type: "UPDATE_AFFECTION", payload: { id: creatureId, delta: 4 } })
+          dispatch({ type: "UPDATE_TRUST", payload: { id: creatureId, delta: 2 } })
+          dispatch({ type: "SET_MOOD", payload: { id: creatureId, mood: "happy" } })
         }
 
         // Show thinking state

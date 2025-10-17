@@ -86,19 +86,24 @@ const getRandomPersonality = (): Personality => {
   return personalities[Math.floor(Math.random() * personalities.length)]
 }
 
-// Helper function to determine relationship level based on affection
-const getRelationshipLevel = (affection: number): RelationshipLevel => {
-  if (affection >= 80) return "best friend"
-  if (affection >= 60) return "close friend"
-  if (affection >= 40) return "friend"
-  if (affection >= 20) return "acquaintance"
+// Helper function to determine relationship level based on affection AND trust
+// Both matter for deeper relationships!
+const getRelationshipLevel = (affection: number, trust: number): RelationshipLevel => {
+  // Calculate a weighted score: affection is primary, trust is secondary
+  const relationshipScore = affection * 0.7 + trust * 0.3
+  
+  // But also require minimum trust thresholds for deeper relationships
+  if (relationshipScore >= 75 && trust >= 60) return "best friend"
+  if (relationshipScore >= 55 && trust >= 45) return "close friend"
+  if (relationshipScore >= 35 && trust >= 25) return "friend"
+  if (relationshipScore >= 15 && trust >= 10) return "acquaintance"
   return "stranger"
 }
 
 // Helper function to create initial relationship properties
 const createInitialRelationship = () => ({
-  affection: 10, // Start with a bit of affection
-  trust: 10, // Start with a bit of trust
+  affection: 5, // Start as strangers
+  trust: 5, // Start with minimal trust
   mood: "neutral" as MoodType,
   relationshipLevel: "stranger" as RelationshipLevel,
   totalInteractions: 0,
@@ -457,7 +462,7 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         creatures: state.creatures.map((creature) => {
           if (creature.id !== action.payload.id) return creature
           const newAffection = Math.max(0, Math.min(100, creature.relationship.affection + action.payload.delta))
-          const newLevel = getRelationshipLevel(newAffection)
+          const newLevel = getRelationshipLevel(newAffection, creature.relationship.trust)
           return {
             ...creature,
             relationship: {
@@ -474,11 +479,13 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         creatures: state.creatures.map((creature) => {
           if (creature.id !== action.payload.id) return creature
           const newTrust = Math.max(0, Math.min(100, creature.relationship.trust + action.payload.delta))
+          const newLevel = getRelationshipLevel(creature.relationship.affection, newTrust)
           return {
             ...creature,
             relationship: {
               ...creature.relationship,
               trust: newTrust,
+              relationshipLevel: newLevel,
             },
           }
         }),

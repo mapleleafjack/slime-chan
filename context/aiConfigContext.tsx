@@ -25,14 +25,14 @@ const DEFAULT_CONFIG: AIConfig = {
   apiKey: "",
   baseUrl: "/api/local-llm",
   model: "local-llm",
-  temperature: 0.8,
-  maxTokens: 300,
+  temperature: 0.9, // Higher for more creative, personality-driven responses
+  maxTokens: 350, // Balanced for detailed yet concise responses
 }
 
 const PROVIDER_DEFAULTS: Record<AIProvider, { baseUrl: string; model: string }> = {
   openai: {
     baseUrl: "https://api.openai.com/v1",
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini", // Better model for more intelligent conversations
   },
   deepseek: {
     baseUrl: "https://api.deepseek.com/v1",
