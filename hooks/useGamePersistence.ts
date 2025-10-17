@@ -3,7 +3,7 @@
  * Handles auto-save and loading game state from the server
  */
 
-import { useEffect, useCallback, useRef, useState } from "react"
+import { useEffect, useCallback, useRef, useState, useMemo } from "react"
 import { useAuth } from "@/context/authContext"
 import { useCreature } from "@/context/creatureContext"
 import { useDayCycle } from "@/context/dayCycleContext"
@@ -21,6 +21,7 @@ export const useGamePersistence = () => {
   const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isLoadingRef = useRef(false)
   const lastUserIdRef = useRef<string | null>(null)
+  const lastMeaningfulStateRef = useRef<string>("")
   const [hasLoaded, setHasLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -57,6 +58,7 @@ export const useGamePersistence = () => {
           // Restore creatures
           if (gameState.creatures && gameState.creatures.length > 0) {
             gameState.creatures.forEach((creature) => {
+              // No migration needed - creatures without names should stay unnamed
               creatureDispatch({ type: "ADD_CREATURE", payload: creature })
             })
           }
@@ -167,26 +169,57 @@ export const useGamePersistence = () => {
     }
   }, [isAuthenticated, saveGameState])
 
+  // Create a memoized version of meaningful state that only changes when important fields change
+  // Explicitly exclude animation-related fields (position, frames, isWalking, isJumping, etc.)
+  const meaningfulState = useMemo(() => {
+    return JSON.stringify({
+      creatures: creatureState.creatures.map(creature => ({
+        id: creature.id,
+        creatureType: creature.creatureType,
+        color: creature.color,
+        firstName: creature.firstName,
+        personality: creature.personality,
+        capabilities: creature.capabilities,
+        relationship: creature.relationship,
+        conversationHistoryLength: creature.conversationHistory?.length || 0,
+        // Only track mode changes, not current behavior or animation state
+        mode: creature.mode,
+        // Explicitly NOT including: position, direction, isWalking, isJumping, 
+        // walkFrame, idleFrame, jumpFrame, isSleeping, currentBehavior - these are animation state
+      })),
+      activeCreatureId: creatureState.activeCreatureId,
+    })
+  }, [
+    // Only depend on the creatures array length and active creature
+    // This prevents recalculation on every frame update
+    creatureState.creatures.length,
+    creatureState.activeCreatureId,
+    // Stringify the important fields to track deep changes
+    JSON.stringify(creatureState.creatures.map(c => ({
+      id: c.id,
+      firstName: c.firstName,
+      personality: c.personality,
+      affection: c.relationship.affection,
+      trust: c.relationship.trust,
+      mood: c.relationship.mood,
+      historyLength: c.conversationHistory?.length || 0,
+      mode: c.mode,
+    }))),
+  ])
+
   // Save on important state changes (debounced)
   useEffect(() => {
-    if (isAuthenticated && creatureState.creatures.length > 0 && hasLoaded) {
-      // Serialize creatures to detect deep changes
-      const stateSnapshot = JSON.stringify({
-        creatures: creatureState.creatures,
-        activeCreatureId: creatureState.activeCreatureId,
-      })
-      
-      console.log("State changed, triggering debounced save")
+    if (!isAuthenticated || creatureState.creatures.length === 0 || !hasLoaded) {
+      return
+    }
+
+    // Only trigger save if meaningful state actually changed
+    if (meaningfulState !== lastMeaningfulStateRef.current) {
+      lastMeaningfulStateRef.current = meaningfulState
+      console.log("Meaningful state changed, triggering debounced save")
       debouncedSave()
     }
-  }, [
-    isAuthenticated,
-    hasLoaded,
-    // Serialize to detect deep changes in creatures
-    JSON.stringify(creatureState.creatures),
-    creatureState.activeCreatureId,
-    debouncedSave,
-  ])
+  }, [isAuthenticated, hasLoaded, meaningfulState, debouncedSave])
 
   // Save before page unload
   useEffect(() => {

@@ -244,6 +244,18 @@
   }
 }
 
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
 /* Menu button styles */
 .menu-button {
   padding: 8px 16px;

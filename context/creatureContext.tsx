@@ -17,6 +17,7 @@ import type {
 import type React from "react"
 import { createContext, useContext, useReducer } from "react"
 import { getCreatureDefinition } from "@/components/CreatureGame/creatures"
+import { getRandomFirstName } from "@/utils/nameUtils"
 
 // Creature actions - generic actions that work for all creatures
 type CreatureAction =
@@ -42,6 +43,7 @@ type CreatureAction =
   | { type: "ADD_MESSAGE"; payload: { id: string; message: Message } }
   | { type: "CLEAR_CONVERSATION"; payload: string }
   | { type: "SET_PERSONALITY"; payload: { id: string; personality: Personality } }
+  | { type: "SET_CREATURE_NAME"; payload: { id: string; firstName: string } }
   // Relationship property actions
   | { type: "UPDATE_AFFECTION"; payload: { id: string; delta: number } } // Change affection by delta
   | { type: "UPDATE_TRUST"; payload: { id: string; delta: number } } // Change trust by delta
@@ -112,11 +114,18 @@ const createInitialRelationship = () => ({
 })
 
 // Factory functions for creating initial creatures
-export const createInitialSlime = (id: string, color: SlimeColor, position: number): SlimeData => ({
+export const createInitialSlime = (
+  id: string, 
+  color: SlimeColor, 
+  position: number, 
+  firstName?: string,
+  personality?: Personality
+): SlimeData => ({
   id,
+  firstName, // Optional: will be undefined until user names the creature
   creatureType: "slime",
   color,
-  personality: getRandomPersonality(),
+  personality: personality || getRandomPersonality(), // Use provided personality or fallback to random
   relationship: createInitialRelationship(),
   isWalking: false,
   isJumping: false,
@@ -145,11 +154,17 @@ export const createInitialSlime = (id: string, color: SlimeColor, position: numb
   },
 })
 
-export const createInitialMushroom = (id: string, position: number): MushroomData => ({
+export const createInitialMushroom = (
+  id: string, 
+  position: number, 
+  firstName?: string,
+  personality?: Personality
+): MushroomData => ({
   id,
+  firstName, // Optional: will be undefined until user names the creature
   creatureType: "mushroom",
   color: "default",
-  personality: getRandomPersonality(),
+  personality: personality || getRandomPersonality(), // Use provided personality or fallback to random
   relationship: createInitialRelationship(),
   isWalking: true, // Mushrooms start walking
   isGlowing: false,
@@ -216,6 +231,13 @@ const creatureReducer = (state: CreatureState, action: CreatureAction): Creature
         ...state,
         creatures: state.creatures.map((creature) =>
           creature.id === action.payload.id ? { ...creature, personality: action.payload.personality } : creature,
+        ),
+      }
+    case "SET_CREATURE_NAME":
+      return {
+        ...state,
+        creatures: state.creatures.map((creature) =>
+          creature.id === action.payload.id ? { ...creature, firstName: action.payload.firstName } : creature,
         ),
       }
     case "SET_WALKING":

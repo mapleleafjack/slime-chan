@@ -70,7 +70,10 @@ const CreatureDetailPanel: React.FC = () => {
 
   // Get creature type display name
   const getCreatureTypeName = () => {
-    if (activeSlime) return `${activeSlime.color} Slime`
+    if (activeSlime) {
+      const color = activeSlime.color.charAt(0).toUpperCase() + activeSlime.color.slice(1)
+      return `${color} Slime`
+    }
     return "🍄 Mushroom"
   }
 
@@ -256,16 +259,30 @@ const CreatureDetailPanel: React.FC = () => {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h3
               style={{
-                margin: "0 0 8px 0",
-                fontSize: "16px",
+                margin: "0 0 4px 0",
+                fontSize: "18px",
                 fontWeight: "bold",
-                color: "#ffffff",
-                textTransform: "capitalize",
+                color: activeCreature?.firstName ? "#ff69b4" : "rgba(255,255,255,0.8)",
+                textShadow: activeCreature?.firstName ? "0 0 8px rgba(255, 105, 180, 0.5)" : "none",
                 fontFamily: "monospace",
               }}
             >
-              {getCreatureTypeName()}
+              {activeCreature?.firstName || getCreatureTypeName()}
             </h3>
+            {activeCreature?.firstName && (
+              <div
+                style={{
+                  margin: "0 0 8px 0",
+                  fontSize: "14px",
+                  fontWeight: "normal",
+                  color: "rgba(255,255,255,0.8)",
+                  textTransform: "capitalize",
+                  fontFamily: "monospace",
+                }}
+              >
+                {getCreatureTypeName()}
+              </div>
+            )}
             <div
               style={{
                 fontSize: "13px",

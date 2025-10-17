@@ -72,7 +72,10 @@ const BaseCreature: React.FC<BaseCreatureProps> = (props) => {
       const elapsed = timestamp - lastTimestampRef.current
 
       if (elapsed > 1000 / definition.physics.fps) {
-        if (creature.isWalking) {
+        // Handle animation frame updates - check jumping first for slimes
+        if (creature.creatureType === "slime" && "isJumping" in creature && creature.isJumping) {
+          dispatch({ type: "INCREMENT_JUMP_FRAME", payload: id })
+        } else if (creature.isWalking) {
           dispatch({ type: "INCREMENT_WALK_FRAME", payload: id })
         } else {
           dispatch({ type: "INCREMENT_IDLE_FRAME", payload: id })
@@ -103,7 +106,7 @@ const BaseCreature: React.FC<BaseCreatureProps> = (props) => {
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [isVisible, creature?.isWalking, creature?.direction, creature?.position, dispatch, id, definition])
+  }, [isVisible, creature?.isWalking, creature?.creatureType, creature && "isJumping" in creature ? creature.isJumping : false, creature?.direction, creature?.position, dispatch, id, definition])
 
   useEffect(() => {
     if (!isVisible || !creature || creature.mode === "user") return
@@ -272,8 +275,14 @@ const BaseCreature: React.FC<BaseCreatureProps> = (props) => {
                   )
                 })}
               </div>
+            ) : isActive ? (
+              <span>
+                {creature.firstName || definition.displayName}
+              </span>
             ) : (
-              creature.bubble.text
+              <span>
+                {creature.bubble.text}
+              </span>
             )}
           </div>
         </div>

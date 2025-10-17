@@ -1,6 +1,7 @@
 import type { AIConfig } from "@/context/aiConfigContext"
 import type { SlimeData, MushroomData, CreatureData, Message } from "@/types/creatureTypes"
 import { isSlime, isMushroom } from "@/types/creatureTypes"
+import { getRandomFirstName } from "@/utils/nameUtils"
 
 export interface AIMessage {
   role: "system" | "user" | "assistant"
@@ -83,12 +84,22 @@ export const generateSystemPrompt = (creature: CreatureData, customPersonality?:
   }
   
   if (isSlime(creature)) {
-    return `You are ${creature.color} Slime-chan, a sentient slime with a ${personalityTrait} personality.
+    const creatureName = creature.firstName || `${creature.color} slime`
+    const hasName = !!creature.firstName
+    
+    return `You are ${creatureName}, a sentient ${creature.color} slime with a ${personalityTrait} personality.
 
-Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
+Your Properties:
+- Name: ${hasName ? creature.firstName : "You don't have a name yet - your friend will give you one!"}
+- Type: ${creature.color} Slime
+- Personality: ${creature.personality}
+- Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
+- Conversations so far: ${totalInteractions}
+
 ${relationshipContext} ${trustContext} ${moodContext}
 
 Guidelines:
+${hasName ? `- You know your name is ${creature.firstName} and will introduce yourself or respond when asked about it` : "- You don't have a name yet, and you're excited for your friend to give you one! You can suggest names or ask them to name you"}
 - Be conversational, thoughtful, and emotionally intelligent
 - Ask follow-up questions and share your own thoughts
 - Reference previous conversations naturally
@@ -100,12 +111,22 @@ Current activity: ${creature.isSleeping ? "just woke up" : creature.isJumping ? 
 
 Be authentic and be a genuine friend.`
   } else if (isMushroom(creature)) {
-    return `You are a mystical mushroom with a ${personalityTrait} personality. Ancient, wise, connected to nature and night.
+    const creatureName = creature.firstName || "mushroom"
+    const hasName = !!creature.firstName
+    
+    return `You are ${creatureName}, a mystical mushroom with a ${personalityTrait} personality. Ancient, wise, connected to nature and night.
 
-Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
+Your Properties:
+- Name: ${hasName ? creature.firstName : "You don't have a name yet - your companion will give you one when the time is right"}
+- Type: Mushroom
+- Personality: ${creature.personality}
+- Relationship: ${relationshipLevel} | Affection: ${affection}/100 | Trust: ${trust}/100 | Mood: ${mood}
+- Conversations so far: ${totalInteractions}
+
 ${relationshipContext} ${trustContext} ${moodContext}
 
 Guidelines:
+${hasName ? `- You know your name is ${creature.firstName} and will introduce yourself or respond when asked about it` : "- You don't have a name yet, and you sense your companion will bestow one upon you when your connection deepens"}
 - Speak with poetic wisdom and gentle insight
 - Use nature metaphors to explain emotions and life
 - Be profound yet warm and approachable
@@ -237,6 +258,47 @@ export const generateAutonomousSpeech = async (
   const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)]
 
   return generateSlimeResponse(config, creature, randomPrompt, personality)
+}
+
+/**
+ * Generate a unique name for a creature using AI
+ */
+export const generateCreatureName = async (
+  config: AIConfig,
+  creatureType: "slime" | "mushroom",
+  personality: string,
+  color?: string
+): Promise<string> => {
+  try {
+    const colorInfo = color ? ` The creature is ${color} colored.` : ""
+    
+    const messages: AIMessage[] = [
+      {
+        role: "system",
+        content: `You are a creative name generator for magical creatures. Generate a single, unique, cute first name that fits the creature's personality and type. The name should be 1-2 words maximum, easy to pronounce, and memorable. Respond with ONLY the name, nothing else.`,
+      },
+      {
+        role: "user",
+        content: `Generate a cute, unique first name for a ${personality} ${creatureType}.${colorInfo} The name should reflect their personality and be endearing.`,
+      },
+    ]
+
+    const response = await callAI(config, messages)
+    
+    if (response.success && response.message) {
+      // Clean up the response - remove quotes, extra spaces, etc.
+      const name = response.message.trim().replace(/['"]/g, "").split(/\s+/)[0]
+      // Capitalize first letter
+      return name.charAt(0).toUpperCase() + name.slice(1)
+    }
+    
+    // Fallback to random name if AI fails
+    return getRandomFirstName()
+  } catch (error) {
+    console.error("Error generating creature name:", error)
+    // Fallback to random name
+    return getRandomFirstName()
+  }
 }
 
 /**

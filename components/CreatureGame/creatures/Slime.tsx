@@ -229,14 +229,6 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   }, [])
 
   useEffect(() => {
-    if (!creature || !isSlime(creature) || !creature.isJumping) return
-    const interval = setInterval(() => {
-      dispatch({ type: "INCREMENT_JUMP_FRAME", payload: id })
-    }, 1000 / SLIME_DEFINITION.physics.fps)
-    return () => clearInterval(interval)
-  }, [creature, dispatch, id])
-
-  useEffect(() => {
     if (!creature || !isSlime(creature)) return
     const jumpAnimation = SLIME_DEFINITION.sprites[creature.color].animations.jump!
     const jumpCompleted = creature.jumpFrame >= jumpAnimation.frameCount - 1 && creature.isJumping

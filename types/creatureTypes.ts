@@ -60,6 +60,7 @@ export type CreatureCapabilities = {
  */
 export type BaseCreatureData = {
   id: string
+  firstName?: string // Optional: Set by talking to the creature
   creatureType: CreatureType
   capabilities: CreatureCapabilities
   personality: Personality
