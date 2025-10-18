@@ -1,6 +1,9 @@
 # 🟢 Slime-chan
 
 [![Tests](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml)
+[![Build](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml)
+
+![Slime-chan](public/assets/blue/idle.png)
 
 An interactive virtual pet game with AI-powered conversations! Watch your cute slimes bounce around, and chat with them using advanced AI.
 
@@ -12,7 +15,16 @@ An interactive virtual pet game with AI-powered conversations! Watch your cute s
 - 🌅 **Day/Night Cycle** - Dynamic lighting and atmosphere
 - 💬 **Real-time Chat** - Type messages and get contextual AI responses
 
-## 🚀 Quick Start
+## 📸 Screenshots
+
+![Gameplay](.github/screenshots/gameplay.png)
+*Slimes playing in their world*
+
+![Creature Detail Panel](.github/screenshots/creature-detail.png)
+*Detailed creature interaction panel*
+
+
+## �🚀 Quick Start
 
 ```bash
 # Install dependencies
