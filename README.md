@@ -8,6 +8,8 @@
 
 An interactive virtual pet game with AI-powered conversations! Watch your cute slimes bounce around, and chat with them using advanced AI.
 
+🌐 **[Play Now at www.slimechan.xyz](https://www.slimechan.xyz)**
+
 ## ✨ Features
 
 - 🎮 **Interactive Slimes** - Click to select, use arrow keys and space to control
