@@ -44,13 +44,21 @@ jobs:
     - name: Generate Release Notes
       id: release_notes
       run: |
-        # Get the previous tag
-        PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ github.ref_name }}^)
+        # Get the previous tag (if it exists)
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ github.ref_name }}^ 2>/dev/null || echo "")
         
         # Generate changelog
         echo "## What's Changed" > RELEASE_NOTES.md
         echo "" >> RELEASE_NOTES.md
-        git log ${PREVIOUS_TAG}..${{ github.ref_name }} --pretty=format:"- %s (%h)" >> RELEASE_NOTES.md || echo "- Initial release" >> RELEASE_NOTES.md
+        
+        if [ -z "$PREVIOUS_TAG" ]; then
+          echo "🎉 Initial release of Slime-chan!" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "### Features" >> RELEASE_NOTES.md
+          git log ${{ github.ref_name }} --pretty=format:"- %s (%h)" >> RELEASE_NOTES.md
+        else
+          git log ${PREVIOUS_TAG}..${{ github.ref_name }} --pretty=format:"- %s (%h)" >> RELEASE_NOTES.md
+        fi
         
         cat RELEASE_NOTES.md
 
