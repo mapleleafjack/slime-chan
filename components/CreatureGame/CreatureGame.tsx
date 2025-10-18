@@ -63,7 +63,7 @@ const CreatureGameContent = ({ onShowAuth }: CreatureGameProps) => {
     })
 
     return () => {
-      window.removeEventListener("keydown", (event) => {
+      window.removeEventListener("keydown", () => {
         // Cleanup
       })
     }

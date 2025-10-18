@@ -18,7 +18,6 @@ type CreatureManagerProps = {
 
 const CreatureManager: React.FC<CreatureManagerProps> = ({ hasLoadedGame, isLoadingGame }) => {
   const { state, dispatch } = useCreature()
-  const { isAuthenticated } = useAuth()
   const addButtonClickedRef = useRef(false)
   const addButtonTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hasInitializedRef = useRef(false)

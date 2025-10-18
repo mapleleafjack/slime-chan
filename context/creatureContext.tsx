@@ -20,7 +20,7 @@ import { getCreatureDefinition } from "@/components/CreatureGame/creatures"
 import { getRandomFirstName } from "@/utils/nameUtils"
 
 // Creature actions - generic actions that work for all creatures
-type CreatureAction =
+export type CreatureAction =
   | { type: "ADD_CREATURE"; payload: CreatureData }
   | { type: "REMOVE_CREATURE"; payload: string }
   | { type: "CLEAR_ALL_CREATURES" }

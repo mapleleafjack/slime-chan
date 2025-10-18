@@ -8,7 +8,7 @@ import { DayPhaseProvider } from "@/context/dayCycleContext"
 import { AIConfigProvider } from "@/context/aiConfigContext"
 
 export default function Home() {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
   const [showAuthScreen, setShowAuthScreen] = useState(false)
   const [authDismissed, setAuthDismissed] = useState(false)
   const [gameKey, setGameKey] = useState(0)

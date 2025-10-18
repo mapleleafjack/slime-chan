@@ -142,7 +142,7 @@ export const db = {
     const row = result.rows[0]
     return {
       userId,
-      creatures: row.creatures as any, // JSONB is already parsed by Vercel Postgres
+      creatures: row.creatures as GameState['creatures'], // JSONB is already parsed by Vercel Postgres
       activeCreatureId: row.active_creature_id,
       debugTime: row.debug_time ? new Date(row.debug_time) : null,
       lastSaved: row.last_saved,

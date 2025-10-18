@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useCreature } from "@/context/creatureContext"
+import { useCreature, type CreatureAction } from "@/context/creatureContext"
 import { isSlime, type SlimeData, type CreatureData, type SlimeColor } from "@/types/creatureTypes"
-import { getRandomPhrase } from "@/utils/gameUtils"
 import BaseCreature, { type MenuHandlers, type CreatureMenuConfig } from "./BaseCreature"
 import type { CreatureDefinition } from "./types"
 
@@ -87,7 +86,7 @@ const getSlimeMenuConfig = (
   creature: SlimeData,
   allCreatures: CreatureData[],
   handlers: MenuHandlers,
-  dispatch: any
+  dispatch: React.Dispatch<CreatureAction>
 ): CreatureMenuConfig => {
   const sameTypeCount = allCreatures.filter((c) => c.creatureType === "slime").length
 
@@ -150,7 +149,7 @@ const Slime: React.FC<SlimeProps> = ({ id }) => {
   // Track chat active state for keyboard controls
   useEffect(() => {
     const handleChatActive = (e: Event) => {
-      // @ts-ignore
+      // @ts-expect-error - Custom event detail type
       setChatActive(e.detail?.active ?? false)
     }
     window.addEventListener("slime-chat-active", handleChatActive)

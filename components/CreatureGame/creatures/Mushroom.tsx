@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useCreature } from "@/context/creatureContext"
+import { useCreature, type CreatureAction } from "@/context/creatureContext"
 import { isMushroom, type MushroomData, type CreatureData } from "@/types/creatureTypes"
 import { DayPhase } from "@/utils/gameUtils"
 import BaseCreature, { type MenuHandlers, type CreatureMenuConfig } from "./BaseCreature"
@@ -54,7 +54,7 @@ const getMushroomMenuConfig = (
   creature: MushroomData,
   allCreatures: CreatureData[],
   handlers: MenuHandlers,
-  dispatch: any
+  dispatch: React.Dispatch<CreatureAction>
 ): CreatureMenuConfig => {
   const sameTypeCount = allCreatures.filter((c) => c.creatureType === "mushroom").length
 

@@ -5,9 +5,21 @@ import { DayPhase, randomInt } from "@/utils/gameUtils"
 import type React from "react"
 import { useState, useEffect } from "react"
 
+interface Sparkle {
+  id: number
+  startX: number
+  startY: number
+  deltaX: number
+  deltaY: number
+  size: number
+  twinkleDuration: number
+  floatDuration: number
+  delay: number
+}
+
 const NightSparkles: React.FC = () => {
   const { currentPhase } = useDayCycle()
-  const [sparkles, setSparkles] = useState<Array<any>>([])
+  const [sparkles, setSparkles] = useState<Sparkle[]>([])
   const [lastNightPhase, setLastNightPhase] = useState<Date | null>(null)
 
   useEffect(() => {
@@ -53,9 +65,9 @@ const NightSparkles: React.FC = () => {
             `,
             animationDelay: `${sparkle.delay}ms`,
             filter: `blur(${sparkle.size / 3}px)`,
-            ["--dx" as any]: sparkle.deltaX,
-            ["--dy" as any]: sparkle.deltaY,
-          }}
+            "--dx": `${sparkle.deltaX}`,
+            "--dy": `${sparkle.deltaY}`,
+          } as React.CSSProperties}
         />
       ))}
     </>

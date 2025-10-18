@@ -20,7 +20,6 @@ const CreatureDetailPanel: React.FC = () => {
   const activeCreature = state.creatures.find((c) => c.id === state.activeCreatureId)
   const activeSlime = activeCreature && isSlime(activeCreature) ? activeCreature : null
   const activeMushroom = activeCreature && isMushroom(activeCreature) ? activeCreature : null
-  const canTalk = activeCreature?.capabilities.canTalk ?? false
   const { handleUserMessage } = useCreatureAI(state.activeCreatureId || "")
 
   // Animate the sprite

@@ -35,7 +35,7 @@ export const AuthScreen = ({ onClose }: AuthScreenProps) => {
         // Successfully logged in or registered - close the auth screen
         onClose?.()
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)

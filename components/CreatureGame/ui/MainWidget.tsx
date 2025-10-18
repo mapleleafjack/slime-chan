@@ -7,9 +7,8 @@ interface MainWidgetProps {
   currentDateTime: Date
 }
 
-const MainWidget: React.FC<MainWidgetProps> = ({ currentDateTime }) => {
+const MainWidget: React.FC<MainWidgetProps> = () => {
   // Use client-side state to prevent hydration mismatch
-  const [formattedDate, setFormattedDate] = useState("")
   const [formattedTime, setFormattedTime] = useState("")
   const [mounted, setMounted] = useState(false)
 
@@ -24,7 +23,6 @@ const MainWidget: React.FC<MainWidgetProps> = ({ currentDateTime }) => {
 
     const updateTime = () => {
       const now = new Date()
-      setFormattedDate(now.toLocaleDateString())
       setFormattedTime(now.toLocaleTimeString())
     }
 

@@ -122,7 +122,7 @@ const SunnyOverlay: React.FC = () => {
       // Only update every 50ms for performance
       if (deltaTime > 50) {
         // Subtle sun movement - keep sun off to the side
-        setSunPosition((prev) => ({
+        setSunPosition(() => ({
           x: -10 + Math.sin(time / 10000) * 5,
           y: 20 + Math.sin(time / 12000) * 3,
         }))
