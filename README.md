@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml)
 [![Build](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/mapleleafjack/slime-chan/branch/main/graph/badge.svg)](https://codecov.io/gh/mapleleafjack/slime-chan)
 
 ![Slime-chan](public/assets/blue/idle.png)
 
