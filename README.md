@@ -1,7 +1,6 @@
 # Slime-chan
 
-[![CI](https://github.com/mapleleafjack/slime-chan/actions/workflows/ci.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/ci.yml)
-[![Release](https://github.com/mapleleafjack/slime-chan/actions/workflows/release.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/release.yml)
+[![Tests](https://github.com/mapleleafjack/slime-chan/actions/workflows/ci.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/mapleleafjack/slime-chan/branch/main/graph/badge.svg)](https://codecov.io/gh/mapleleafjack/slime-chan)
 [![Latest Release](https://img.shields.io/github/v/release/mapleleafjack/slime-chan)](https://github.com/mapleleafjack/slime-chan/releases/latest)
 
