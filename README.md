@@ -1,4 +1,4 @@
-# 🟢 Slime-chan
+# Slime-chan
 
 [![Tests](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml)
 [![Build](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml)
@@ -18,15 +18,19 @@ An interactive virtual pet game with AI-powered conversations! Watch your cute s
 ## 📸 Screenshots
 
 <p align="center">
-  <img src=".github/screenshots/gameplay.png" alt="Gameplay" width="49%" />
-  <img src=".github/screenshots/creature-detail.png" alt="Creature Detail" width="49%" />
+  <a href=".github/screenshots/gameplay.png">
+    <img src=".github/screenshots/gameplay.png" alt="Gameplay" height="400" style="vertical-align: top; margin-right: 10px;" />
+  </a>
+  <a href=".github/screenshots/creature-detail.png">
+    <img src=".github/screenshots/creature-detail.png" alt="Creature Detail" height="400" style="vertical-align: top; margin-left: 10px;" />
+  </a>
 </p>
 <p align="center">
   <em>Slimes playing in their world | Detailed creature interaction panel</em>
 </p>
 
 
-## �🚀 Quick Start
+## 🚀 Quick Start
 
 ```bash
 # Install dependencies
