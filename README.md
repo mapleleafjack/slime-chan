@@ -1,8 +1,9 @@
 # Slime-chan
 
-[![Tests](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/test.yml)
-[![Build](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/build.yml)
+[![CI](https://github.com/mapleleafjack/slime-chan/actions/workflows/ci.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/ci.yml)
+[![Release](https://github.com/mapleleafjack/slime-chan/actions/workflows/release.yml/badge.svg)](https://github.com/mapleleafjack/slime-chan/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/mapleleafjack/slime-chan/branch/main/graph/badge.svg)](https://codecov.io/gh/mapleleafjack/slime-chan)
+[![Latest Release](https://img.shields.io/github/v/release/mapleleafjack/slime-chan)](https://github.com/mapleleafjack/slime-chan/releases/latest)
 
 ![Slime-chan](public/assets/blue/idle.png)
 
