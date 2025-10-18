@@ -17,11 +17,13 @@ An interactive virtual pet game with AI-powered conversations! Watch your cute s
 
 ## 📸 Screenshots
 
-![Gameplay](.github/screenshots/gameplay.png)
-*Slimes playing in their world*
-
-![Creature Detail Panel](.github/screenshots/creature-detail.png)
-*Detailed creature interaction panel*
+<p align="center">
+  <img src=".github/screenshots/gameplay.png" alt="Gameplay" width="49%" />
+  <img src=".github/screenshots/creature-detail.png" alt="Creature Detail" width="49%" />
+</p>
+<p align="center">
+  <em>Slimes playing in their world | Detailed creature interaction panel</em>
+</p>
 
 
 ## �🚀 Quick Start
